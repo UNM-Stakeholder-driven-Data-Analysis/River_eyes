@@ -10,26 +10,28 @@ library(splitstackshape)
 library(stringi)
 
 #load data####
-dat <- read_csv("Data/Raw/ET_toolbox_R6_2019.csv", skip = 18)
-dat <- read_csv("Data/Raw/ET_toolbox_R6_2018.csv", skip = 18)
-dat <- read_csv("Data/Raw/ET_toolbox_R6_2017.csv", skip = 18)
-dat <- read_csv("Data/Raw/ET_toolbox_R6_2016.csv", skip = 18)
-dat <- read_csv("Data/Raw/ET_toolbox_R6_2015.csv", skip = 18)
-dat <- read_csv("Data/Raw/ET_toolbox_R6_2014.csv", skip = 18)
-dat <- read_csv("Data/Raw/ET_toolbox_R6_2013.csv", skip = 18)
-dat <- read_csv("Data/Raw/ET_toolbox_R6_2012.csv", skip = 18)
-dat <- read_csv("Data/Raw/ET_toolbox_R6_2011.csv", skip = 18)
-dat <- read_csv("Data/Raw/ET_toolbox_R6_2010.csv", skip = 18)
-dat <- read_csv("Data/Raw/ET_toolbox_R6_2009.csv", skip = 18)
-dat <- read_csv("Data/Raw/ET_toolbox_R6_2008.csv", skip = 18)
-dat <- read_csv("Data/Raw/ET_toolbox_R6_2007.csv", skip = 18)
-dat <- read_csv("Data/Raw/ET_toolbox_R6_2006.csv", skip = 18)
-dat <- read_csv("Data/Raw/ET_toolbox_R6_2005.csv", skip = 18)
-dat <- read_csv("Data/Raw/ET_toolbox_R6_2004.csv", skip = 18)
-dat <- read_csv("Data/Raw/ET_toolbox_R6_2003.csv", skip = 18)
-dat <- read_csv("Data/Raw/ET_toolbox_R6_2002.csv", skip = 18)
+dat2019 <- read_csv("Data/Raw/ET_toolbox_R6_2019.csv", skip = 18)
+dat2018 <- read_csv("Data/Raw/ET_toolbox_R6_2018.csv", skip = 18)
+dat2017 <- read_csv("Data/Raw/ET_toolbox_R6_2017.csv", skip = 18)
+dat2016 <- read_csv("Data/Raw/ET_toolbox_R6_2016.csv", skip = 18)
+dat2015 <- read_csv("Data/Raw/ET_toolbox_R6_2015.csv", skip = 18)
+dat2014 <- read_csv("Data/Raw/ET_toolbox_R6_2014.csv", skip = 18)
+dat2013 <- read_csv("Data/Raw/ET_toolbox_R6_2013.csv", skip = 18)
+dat2012 <- read_csv("Data/Raw/ET_toolbox_R6_2012.csv", skip = 18)
 
-#format data into a readable data frame####
+dat2011 <- read_csv("Data/Raw/ET_toolbox_R6_2011.csv", skip = 18)
+dat2009 <- read_csv("Data/Raw/ET_toolbox_R6_2009.csv", skip = 18)
+dat2005 <- read_csv("Data/Raw/ET_toolbox_R6_2005.csv", skip = 18)
+dat2004 <- read_csv("Data/Raw/ET_toolbox_R6_2004.csv", skip = 18)
+dat2003 <- read_csv("Data/Raw/ET_toolbox_R6_2003.csv", skip = 18)
+dat2002 <- read_csv("Data/Raw/ET_toolbox_R6_2002.csv", skip = 18)
+
+dat2010 <- read_csv("Data/Raw/ET_toolbox_R6_2010.csv", skip = 18)
+dat2008 <- read_csv("Data/Raw/ET_toolbox_R6_2008.csv", skip = 18)
+dat2007 <- read_csv("Data/Raw/ET_toolbox_R6_2007.csv", skip = 18)
+dat2006 <- read_csv("Data/Raw/ET_toolbox_R6_2006.csv", skip = 18)
+
+#2019-2012 format data into a readable data frame####
 #rename column
 colnames(dat)[1] <- "X1"
 
@@ -44,12 +46,7 @@ dat <- t(apply(dat,1,function(x){
 dat <- as.data.frame(dat)
 dat <- dat[-c(13)]
 
-             #2011, 2009, 2005, 2004, 2003, 2002 data
-            dat <- dat[-c(13:14)]
-             #2010, 2008, 2007, 2006 data
-            dat <- dat[-c(13)]
-
-#formatting for column names, dates, variable classes####
+#formatting for column names, dates, variable classes##
 dat <- dat %>% 
   drop_na() %>% 
   rename(Month=V1, Day=V2, Tot_DCU_cfs=V3, Ag_DCU_cfs=V4, Riparian_DCU_cfs=V5,
@@ -69,7 +66,80 @@ dat$Month.n <- as.numeric(match(dat$Month,month.abb))
 dat <- dat %>% 
   select(Date:Month, Month.n, Day:Use_to_date_since_Jan1)
 
-#to combine and write files
+#2011, 2009, 2005, 2004, 2003, 2002 format data into a readable data frame####
+#rename column
+colnames(dat)[1] <- "X1"
+
+#text to columns 
+dat <- cSplit(dat, "X1", sep = " ", type.convert = F)
+
+#used to move some columns to the left that got split because of "text to columns"
+dat$X1_03 <- as.numeric(dat$X1_03)
+dat <- t(apply(dat,1,function(x){
+  c(x[!is.na(x)],x[is.na(x)])
+}))
+dat <- as.data.frame(dat)
+
+dat <- dat[-c(13:14)]
+
+#formatting for column names, dates, variable classes##
+dat <- dat %>% 
+  drop_na() %>% 
+  rename(Month=V1, Day=V2, Tot_DCU_cfs=V3, Ag_DCU_cfs=V4, Riparian_DCU_cfs=V5,
+         OpenWater_DCU_cfs=V6, Urban_DCU_cfs=V7, Rain_cfs=V8, Tot_URGWOM_cfs=V9, 
+         five_day_avg_URGWOM_cfs=V10, ten_day_avg_URGWOM_cfs=V11,Use_to_date_since_Jan1=V12) %>% 
+  mutate(Month = str_replace(Month, pattern = "\\.", "")) %>% 
+  add_column(Year = 2018) %>%                          ######NEED to CHANGE YEARS FOR EACH FILE
+  mutate(Date = (paste(Year, Month, Day, sep="-"))) %>% 
+  mutate(Date = as.POSIXct(Date, format="%Y-%b-%d", tz="MST")) %>% 
+  select(Date:Year,everything()) %>% 
+  mutate_at(c("Day","Tot_DCU_cfs", "Ag_DCU_cfs", "Riparian_DCU_cfs",
+              "OpenWater_DCU_cfs", "Urban_DCU_cfs", "Rain_cfs", "Tot_URGWOM_cfs", 
+              "five_day_avg_URGWOM_cfs", "ten_day_avg_URGWOM_cfs","Use_to_date_since_Jan1"), as.numeric)
+
+dat$Month.n <- as.numeric(match(dat$Month,month.abb))
+
+dat <- dat %>% 
+  select(Date:Month, Month.n, Day:Use_to_date_since_Jan1)
+
+#2010, 2008, 2007, 2006 format data into a readable data frame####
+#rename column
+colnames(dat)[1] <- "X1"
+
+#text to columns 
+dat <- cSplit(dat, "X1", sep = " ", type.convert = F)
+
+#used to move some columns to the left that got split because of "text to columns"
+dat$X1_03 <- as.numeric(dat$X1_03)
+dat <- t(apply(dat,1,function(x){
+  c(x[!is.na(x)],x[is.na(x)])
+}))
+dat <- as.data.frame(dat)
+
+dat <- dat[-c(13)]
+
+#formatting for column names, dates, variable classes##
+dat <- dat %>% 
+  drop_na() %>% 
+  rename(Month=V1, Day=V2, Tot_DCU_cfs=V3, Ag_DCU_cfs=V4, Riparian_DCU_cfs=V5,
+         OpenWater_DCU_cfs=V6, Urban_DCU_cfs=V7, Rain_cfs=V8, Tot_URGWOM_cfs=V9, 
+         five_day_avg_URGWOM_cfs=V10, ten_day_avg_URGWOM_cfs=V11,Use_to_date_since_Jan1=V12) %>% 
+  mutate(Month = str_replace(Month, pattern = "\\.", "")) %>% 
+  add_column(Year = 2018) %>%                          ######NEED to CHANGE YEARS FOR EACH FILE
+  mutate(Date = (paste(Year, Month, Day, sep="-"))) %>% 
+  mutate(Date = as.POSIXct(Date, format="%Y-%b-%d", tz="MST")) %>% 
+  select(Date:Year,everything()) %>% 
+  mutate_at(c("Day","Tot_DCU_cfs", "Ag_DCU_cfs", "Riparian_DCU_cfs",
+              "OpenWater_DCU_cfs", "Urban_DCU_cfs", "Rain_cfs", "Tot_URGWOM_cfs", 
+              "five_day_avg_URGWOM_cfs", "ten_day_avg_URGWOM_cfs","Use_to_date_since_Jan1"), as.numeric)
+
+dat$Month.n <- as.numeric(match(dat$Month,month.abb))
+
+dat <- dat %>% 
+  select(Date:Month, Month.n, Day:Use_to_date_since_Jan1)
+
+
+#to combine and write files #####
 dat2019 <- dat #346 obs
 dat2018 <- dat #345 obs
 dat2017 <- dat #365 obs
