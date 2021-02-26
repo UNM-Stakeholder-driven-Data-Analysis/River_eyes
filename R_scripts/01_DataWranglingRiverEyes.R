@@ -25,19 +25,20 @@ dat$Date <- as.Date.character(dat$Date, "%Y-%m-%d")
    #bind the two datasets
 dat2 <- rbind(dat, dat1)
 
+dat3 <- dat2 %>% 
+  group_by(Date) %>% 
+  filter(Distance == max(Distance)) %>% 
+  filter(Year > 2002)
+
+
 #Explore date/time and other formatting compilation data ####
 class(dat2$Date)
 head(dat2$Date)
 tail(dat2$Date)
 View(dat3)
 
-#
-
-#write processed compilation data set####
-write.csv(dat2,"~/UNM/Stakeholders/ISC_RiverEyes_RioGrande/River_eyes/Data/Processed/RiverEyesCompilation.csv", row.names = FALSE)
-
-
-
+#write csv processed compilation data set####
+write.csv(dat3,"Data/Processed/DailyExtentDry.csv", row.names = FALSE)
 
 #Load summary dry river miles data####
 dat <- read.csv("Data/Raw/Rio.Grande.Dry.RM.CSV") #don't use read_csv as it messes the header/columns
@@ -47,35 +48,39 @@ dat <- dat %>%
   mutate(RmSeq = trunc(mile))%>% 
   filter(RmSeq %in% (116:130)) %>% 
   mutate(DateSeq = as.Date(Date)) %>% 
-  rename(Mile = mile) %>% 
-  mutate(Month = lubridate::month(DateSeq)) %>% 
-  mutate(Day = lubridate::day(DateSeq)) 
+  rename(Mile = mile)
 
 #Make dummny variables for Reach 6 river mile 130 to 116 and study dates
-test2 <- data.frame(rep(116:130, each=5845))
+test2 <- data.frame(rep(116:130, each=5900))
 colnames(test2)[1] <- "RmSeq"
-test2$"DateSeq" <- seq(as.Date("2002-10-14") , as.Date("2018-10-14"), "day")
+test2$"DateSeq" <- seq(as.Date("2002-08-20") , as.Date("2018-10-14"), "day")
 
 #Join to get presence absence of drying by river mile by day
-LJoinRm <- test2 %>% 
-  left_join(y=dat, by=c("DateSeq", "RmSeq"))
+join_data <- dat %>%
+  mutate(Condition = "Dry") %>%
+  full_join(test2, by=c("DateSeq", "RmSeq")) %>%
+  replace_na(list(Condition = "Wet")) %>%
+  mutate(Condition.b = case_when(Condition == "Wet" ~ 0,
+                           Condition == "Dry" ~ 1,)) %>% 
+  select(RmSeq, DateSeq, Condition, Condition.b) %>% 
+  select(DateSeq,everything()) %>% 
+  distinct()
 
-FJoinRM <- test2 %>% 
-  full_join(y=dat, by=c("DateSeq", "RmSeq"))
-  
-  ###
+#Write csv individual RMs dry####
+write.csv(join_data,"Data/Processed/DailyDryRM.csv", row.names = FALSE)
 
-RJoinRm2 <- dat %>% 
-  right_join(y=test2, by=c("DateSeq", "RmSeq"))
+#Format data for annual dryness by RM####
+Annual_dry_rm <- join_data %>% 
+  mutate(Yr = lubridate::year(DateSeq)) %>%
+  group_by(Yr, RmSeq) %>% 
+  summarise(Sum_yr_rm_dry = sum(Condition.b))
 
-FJoinRM2 <- dat %>% 
-  full_join(y=test2, by=c("DateSeq", "RmSeq"))
-  
-  ###
-Join <- dat %>% 
-  left_join(test2)
-Join <- test2 %>% 
-  left_join(dat)
+#Write csv annual total times a river mile wasdry####
+write.csv(join_data,"Data/Processed/AnnualDryRM.csv", row.names = FALSE)
+
+
+
+
 
 
 
