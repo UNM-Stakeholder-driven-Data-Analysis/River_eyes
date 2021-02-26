@@ -5,7 +5,8 @@
 library(tidyverse)
 
 #Load data ####
-dat <- read.csv("RiverEyesDat2.csv", header=T)
+  #use read_csv for date format to be automatic but this makes it a tibble
+dat <- read_csv("Data/Processed/RiverEyesDat2.csv")
 
 
 #Format date####
