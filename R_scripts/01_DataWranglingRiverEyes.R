@@ -7,6 +7,7 @@
 #Libraries####
 library(tidyverse)
 library(lubridate)
+library(janitor)
 
 #Load data for Daily Extent Dry ####
   
@@ -44,7 +45,13 @@ test1 <- test1 %>%
 #Join to get extent of drying by day####
 join_dat1 <- dat3 %>% 
   full_join(test1, by=c("Date", "Year")) %>% 
-  replace_na(list(DistanceDry = 0))
+  replace_na(list(DistanceDry = 0)) %>% 
+  distinct(Date, .keep_all = TRUE)
+
+#No duplicate dates####
+dat2013 <- join_dat1 %>% 
+  filter(Year==2013) %>% 
+  get_dupes(Date)
 
 #write csv processed compilation data set####
 write.csv(join_dat1,"Data/Processed/DailyExtentDry.csv", row.names = FALSE)
@@ -83,10 +90,16 @@ join_data <- dat %>%
   select(DateSeq,everything()) %>% 
   distinct() %>% 
   mutate(Year = lubridate::year(DateSeq)) %>%
-  mutate(Month = lubridate::month(DateSeq))
+  mutate(Month = lubridate::month(DateSeq)) %>% 
+  distinct(DateSeq,RmSeq, .keep_all = TRUE)
+
+#Test for duplicate dates####
+dat2013 <- get_dupes(join_data, DateSeq, RmSeq)
 
 #Write csv individual RMs dry####
 write.csv(join_data,"Data/Processed/DailyDryRM.csv", row.names = FALSE)
+
+
 
 
 
