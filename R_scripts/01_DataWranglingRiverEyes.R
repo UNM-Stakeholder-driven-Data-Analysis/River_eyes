@@ -36,7 +36,7 @@ dat3 <- dat2 %>%
   select(Date, DistanceDry, Year)
 
 #Make dummy variables for study dates####
-test1 <- seq(as.Date("2003-01-01") , as.Date("2018-10-19"), "day")
+test1 <- seq(as.Date("2003-01-01") , as.Date("2018-12-31"), "day")
 test1 <- as.data.frame(test1)
 test1 <- test1 %>% 
   rename(Date = test1) %>% 
@@ -75,9 +75,9 @@ dat <- dat %>%
 
 
 #Make dummy variables for Reach 6 river mile 130 to 116 and study dates####
-test2 <- data.frame(rep(116:130, each=5771))
+test2 <- data.frame(rep(116:130, each=5844))
 colnames(test2)[1] <- "RmSeq"
-test2$"DateSeq" <- seq(as.Date("2003-01-01") , as.Date("2018-10-19"), "day")
+test2$"DateSeq" <- seq(as.Date("2003-01-01") , as.Date("2018-12-31"), "day")
 
 #Join to get presence absence of drying by river mile by day####
 join_data <- dat %>%
