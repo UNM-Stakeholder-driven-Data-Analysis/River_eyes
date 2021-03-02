@@ -2,70 +2,130 @@
 #The purpose of this script is to explore the River Eyes data set
 
 #Libraries####
+
 library(tidyverse)
+library(car)
+library(lubridate)
 
-#Load data Daily Dry river mile####
-  #use read_csv for date format to be automatic but this makes it a tibble
-dat <- read_csv("Data/Processed/DailyDryRM.csv")
-dat$RmSeq.f <- as.factor(as.character(dat$RmSeq.f))
-dat$Condition.f <- as.factor(as.character(dat$Condition.b))
-dat$Year.f <- as.factor(as.character(dat$Year))
+#Load data Daily Extent Dry ####
+#use read_csv for date format to be automatic but this makes it a tibble
+dat <- read_csv("Data/Processed/DailyExtentDry.csv")
 
-#Summary explore####
+  ###I AM LOSING SOME DATA IN MY WRANGLINGE BUT CAN'T FIGURE OUT WHY...
+  ###THERE SHOULD BE 5 INSTANCES OF DRYING IN REACH 6 RATHER THAN 3
+dat %>% 
+  filter(Reach == 6) %>% 
+  filter(DistanceDry > 0) %>% 
+  View()
+
+# add day of year for plotting
+dat$Day <-  lubridate::yday(dat$Date)
+
+#Summary explore Daily Extent Dry####
 summary(dat)
+summary(dat$Year:dat$DistanceDry)
+dat %>% 
+  group_by(Year) %>% 
+  summarise(DistMn = mean(DistanceDry), n = length(DistanceDry)) %>% 
+  view()
 
+#Plot data Daily Extent Dry####
+plot(dat$DistanceDry~dat$Date)
+hist(dat$DistanceDry, main="Histogram", 
+     xlab="Distance of river drying events (total river miles)") #zero inflated
+hist(log(dat$DistanceDry+1), main = "Histogram log(DistanceDry)",
+     xlab="Distance of river drying events (total river miles)")
+boxplot(dat$DistanceDry~dat$Year, main="Boxplot", xlab = "Year",
+        ylab="Distance of river drying events (total river miles)")
 
-#Plot data####
-ggplot(dat)+
-  geom_bar(aes(x=RmSeq.f, fill=Condition.f), stat = "count")) +
-  facet_wrap(~Year.f)
-
-
-ggplot(dat, aes(x=Year.f, y=RmSeq))+
-  facet_wrap(vars(Condition.f))+
-  geom_point()+
-  scale_x_continuous(breaks = seq(0, 365, by=50))
-
-hist(dat$Distance)
-
-par(mfrow = c(2,1))
-hist(dat$, xlab="Upper river mile dry", main="")
-hist(dat$LRM, xlab="Lowest river mile dry", main="")
-  
-#histogram of distance of dry rivers by year
-ggplot(dat, aes(Condition.b))+
-  facet_wrap(vars(RmSeq))+
-  geom_histogram()
-  
- #relationship drying distance to upstream appearance
-ggplot(dat, aes(x=Distance, y=URM))+
-  geom_point()
-        #by year
-ggplot(dat, aes(x=Distance, y=URM))+
-  facet_wrap(vars(Year))+
-  geom_point()
-
-  #relationship drying distance to downstream end
-ggplot(dat, aes(x=Distance, y=LRM))+
-  geom_point()
-        #by year
-ggplot(dat, aes(x=Distance, y=LRM))+
-  facet_wrap(vars(Year))+
-  geom_point()
-
-
-#Load data Daily Extent Dry river mile####
-dat2 <- read_csv("Data/Processed/DailyExtentDry.csv")
-
-#Summary explore####
-summary(dat2)
-
-#Plot data####
-hist(dat2$Distance)
-plot(dat2$Distance~dat2$Year)
-
-ggplot(dat2, aes(Distance))+
+ggplot(dat, aes(DistanceDry))+
   geom_histogram()+
   facet_wrap(~Year, scale="free") +
   ggtitle("Histograms by Year")+
-  xlab("Distance of river drying events (total river mile)")
+  xlab("Distance of river drying events (total river miles)")
+
+dat %>% 
+  filter(DistanceDry > 0) %>% 
+  ggplot(aes(DistanceDry))+
+  geom_histogram()+
+  ggtitle("Histograms by Year Zeros Removed")+
+  xlab("Distance of river drying events (total river miles)")
+
+dat %>% 
+  filter(DistanceDry > 0) %>% 
+  ggplot(aes(DistanceDry))+
+  geom_histogram()+
+  facet_wrap(~Year, scale="free")+
+  ggtitle("Histograms by Year Zeros Removed")+
+  xlab("Distance of river drying events (total river miles)")
+
+ggplot(data=dat, aes(x=Day, y=DistanceDry))+
+  geom_point()+
+  facet_wrap(~Year, scales="free_y")+
+  theme_bw()
+
+ggplot(data=dat, aes(x=Day, y=DistanceDry))+
+  geom_point()+
+  facet_wrap(~Reach, scales="free_y")+
+  theme_bw()
+
+ggplot(data=dat, aes(x=Date, y=DistanceDry))+
+  geom_point()+
+  facet_wrap(~Reach, scales="free_y")+
+  theme_bw()
+
+#Determine distribution####
+dat_r_R5 <- dat %>% 
+  filter(Reach == 5) %>% 
+  sample_n(5000) 
+qqPlot(dat_r_R5$DistanceDry); shapiro.test(dat_r_R5$DistanceDry) #NOT normal zero inflated
+qqPlot(log10(dat_r_R5$DistanceDry+1)); shapiro.test(log10(dat_r_R5$DistanceDry+1)) #Log transform NOT normal zero inflated
+
+dat_r_R6 <- dat %>% 
+  filter(Reach == 5) %>% 
+  sample_n(5000) 
+qqPlot(dat_r_R6$DistanceDry); shapiro.test(dat_r_R6$DistanceDry) #NOT normal zero inflated
+qqPlot(log10(dat_r_R6$DistanceDry+1)); shapiro.test(log10(dat_r_R6$DistanceDry+1)) #Log transform NOT normal zero inflated
+
+dat_r_R7 <- dat %>% 
+  filter(Reach == 5) %>% 
+  sample_n(5000) 
+qqPlot(dat_r_R7$DistanceDry); shapiro.test(dat_r_R7$DistanceDry) #NOT normal zero inflated
+qqPlot(log10(dat_r_R7$DistanceDry+1)); shapiro.test(log10(dat_r_R7$DistanceDry+1)) #Log transform NOT normal zero inflated
+
+dat_r_R8 <- dat %>% 
+  filter(Reach == 5) %>% 
+  sample_n(5000) 
+qqPlot(dat_r_R8$DistanceDry); shapiro.test(dat_r_R8$DistanceDry) #NOT normal zero inflated
+qqPlot(log10(dat_r_R8$DistanceDry+1)); shapiro.test(log10(dat_r_R8$DistanceDry+1)) #Log transform NOT normal zero inflated
+
+
+#Load data Annual Dry river mile ####
+dat1 <- read_csv("Data/Processed/AnnualDryRM.csv")
+
+#Summary explore Annual Dry river mile####
+summary(dat1)
+with(dat1, table(Sum_days_rm_dry, RM))
+
+#Plots
+plot(dat1$Sum_days_rm_dry~dat1$RM)
+
+dat1 %>% 
+  group_by(Year) %>% 
+  summarise(DistMn = mean(Sum_days_rm_dry)) %>% 
+  view()
+
+#Plot data Annual Dry river mile
+plot(dat1$Sum_days_rm_dry~dat1$RmSeq)
+hist(dat1$Sum_days_rm_dry)
+
+# plot
+ggplot(data=dat1, aes(x=RmSeq, y=Sum_days_rm_dry))+
+  geom_point() + geom_path()+
+  facet_wrap(~Year, scales="free_y")
+
+
+
+
+
+
