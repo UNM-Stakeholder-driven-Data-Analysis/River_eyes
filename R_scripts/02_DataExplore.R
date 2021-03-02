@@ -21,7 +21,7 @@ dat %>%
 # add day of year for plotting
 dat$Day <-  lubridate::yday(dat$Date)
 
-#Summary explore Daily Extent Dry####
+#Summary explore Daily Extent Dry
 summary(dat)
 summary(dat$Year:dat$DistanceDry)
 dat %>% 
@@ -29,7 +29,7 @@ dat %>%
   summarise(DistMn = mean(DistanceDry), n = length(DistanceDry)) %>% 
   view()
 
-#Plot data Daily Extent Dry####
+#Plot data Daily Extent Dry
 plot(dat$DistanceDry~dat$Date)
 hist(dat$DistanceDry, main="Histogram", 
      xlab="Distance of river drying events (total river miles)") #zero inflated
@@ -74,7 +74,7 @@ ggplot(data=dat, aes(x=Date, y=DistanceDry))+
   facet_wrap(~Reach, scales="free_y")+
   theme_bw()
 
-#Determine distribution####
+#Determine distribution
 dat_r_R5 <- dat %>% 
   filter(Reach == 5) %>% 
   sample_n(5000) 
@@ -103,12 +103,9 @@ qqPlot(log10(dat_r_R8$DistanceDry+1)); shapiro.test(log10(dat_r_R8$DistanceDry+1
 #Load data Annual Dry river mile ####
 dat1 <- read_csv("Data/Processed/AnnualDryRM.csv")
 
-#Summary explore Annual Dry river mile####
+#Summary explore Annual Dry river mile
 summary(dat1)
 with(dat1, table(Sum_days_rm_dry, RM))
-
-#Plots
-plot(dat1$Sum_days_rm_dry~dat1$RM)
 
 dat1 %>% 
   group_by(Year) %>% 
@@ -116,13 +113,18 @@ dat1 %>%
   view()
 
 #Plot data Annual Dry river mile
-plot(dat1$Sum_days_rm_dry~dat1$RmSeq)
+plot(dat1$Sum_days_rm_dry~dat1$RM)
 hist(dat1$Sum_days_rm_dry)
 
 # plot
-ggplot(data=dat1, aes(x=RmSeq, y=Sum_days_rm_dry))+
+ggplot(data=dat1, aes(x=RM, y=Sum_days_rm_dry))+
   geom_point() + geom_path()+
   facet_wrap(~Year, scales="free_y")
+
+#Load data Daily Dry RM####
+dat2 <- read_csv("Data/Processed/DailyDryRM.csv")
+
+
 
 
 
