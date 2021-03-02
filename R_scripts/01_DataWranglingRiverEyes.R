@@ -28,17 +28,17 @@ dat1 <- dat %>%
                            RM <=67 ~ 8
   ))
 
-dat2 <- dat %>% 
-  group_by(Date) %>% 
-  filter(Distance == max(Distance)) %>% 
-  rename(DistanceDry = Distance) %>% 
+###I AM LOSING SOME DATA IN MY WRANGLINGE BUT CAN'T FIGURE OUT WHY...
+###THERE SHOULD BE 5 INSTANCES OF DRYING IN REACH 6 RATHER THAN 3
+dat %>% 
+  filter(URM >=116 & URM<=130) %>% 
   filter(Year > 2002) %>% 
-  mutate(RM = URM) %>% 
-  mutate(Reach = case_when(RM >=129 ~ 5,
-                           RM <=130 & RM >=116 ~ 6,
-                           RM <=115 & RM >=68 ~ 7,
-                           RM <=67 ~ 8
-  ))
+  View()
+
+dat1 %>% 
+  filter(Reach == 6) %>% 
+  filter(DistanceDry >0) %>% 
+  View()
 
 
 #Make dummy variables for study dates####
