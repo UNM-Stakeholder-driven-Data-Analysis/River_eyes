@@ -17,7 +17,7 @@ dat <- read.csv("Data/Raw/River_Eyes/RiverEyes_compilation_2002_2018.csv", heade
 dat$Date <- as.Date.character(dat$Date, "%Y-%m-%d")
 
 dat1 <- dat %>% 
-  group_by(Date) %>% 
+  group_by(Date, LRM) %>% 
   filter(Distance == max(Distance)) %>% 
   rename(DistanceDry = Distance) %>% 
   filter(Year > 2002) %>% 
@@ -35,11 +35,9 @@ dat %>%
   filter(Year > 2002) %>% 
   View()
 
-dat1 %>% 
+test <- dat1 %>% 
   filter(Reach == 6) %>% 
-  filter(DistanceDry >0) %>% 
-  View()
-
+  filter(DistanceDry >0) 
 
 #Make dummy variables for study dates####
 test1 <- data.frame(rep(5:8, each=5844))
