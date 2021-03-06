@@ -4,9 +4,14 @@
 #Libraries ####
 
 library(tidyverse)
-library(car)
-library(lubridate)
-library(psych)
+library(car) #qq plot fxn
+library(lubridate) #dates
+library(psych) #correlation
+
+library(lme4) # for creating mixed models
+library(car) # for Anova(), vif()
+library(MuMIn) # for AICc
+library(emmeans) # for emmeans, emtrends, all the post hoc tests and plotting
 
 #Response Var - Daily Extent Dry ####
 #use read_csv for date format to be automatic but this makes it a tibble
@@ -87,28 +92,37 @@ ggplot(data=dat, aes(x=Date, y=DistanceDry))+
 #Determine distribution
 dat_r_R5 <- dat %>% 
   filter(Reach == 5) %>% 
-  sample_n(5000) 
-qqPlot(dat_r_R5$DistanceDry); shapiro.test(dat_r_R5$DistanceDry) #NOT normal zero inflated
-qqPlot(log10(dat_r_R5$DistanceDry+1)); shapiro.test(log10(dat_r_R5$DistanceDry+1)) #Log transform NOT normal zero inflated
-qqPlot((dat_r_R5$DistanceDry+1)^2); shapiro.test((dat_r_R5$DistanceDry+1)^2)
+  sample_n(5000) %>% 
+  group_by(Day)
+qqPlot(dat_r_R5$DistanceDry); shapiro.test(dat_r_R5$DistanceDry) 
+qqPlot(log10(dat_r_R5$DistanceDry+1)); shapiro.test(log10(dat_r_R5$DistanceDry+1)) 
+qqPlot((dat_r_R5$DistanceDry)^2); shapiro.test((dat_r_R5$DistanceDry)^2)
+qqPlot(sqrt(dat_r_R5$DistanceDry)); shapiro.test((dat_r_R5$DistanceDry))
+
 
 dat_r_R6 <- dat %>% 
-  filter(Reach == 5) %>% 
+  filter(Reach == 6) %>% 
   sample_n(5000) 
-qqPlot(dat_r_R6$DistanceDry); shapiro.test(dat_r_R6$DistanceDry) #NOT normal zero inflated
-qqPlot(log10(dat_r_R6$DistanceDry+1)); shapiro.test(log10(dat_r_R6$DistanceDry+1)) #Log transform NOT normal zero inflated
+qqPlot(dat_r_R6$DistanceDry); shapiro.test(dat_r_R6$DistanceDry) 
+qqPlot(log10(dat_r_R6$DistanceDry+1)); shapiro.test(log10(dat_r_R6$DistanceDry+1))
+qqPlot((dat_r_R6$DistanceDry)^2); shapiro.test((dat_r_R6$DistanceDry)^2)
+qqPlot(sqrt(dat_r_R6$DistanceDry)); shapiro.test((dat_r_R6$DistanceDry))
 
 dat_r_R7 <- dat %>% 
-  filter(Reach == 5) %>% 
+  filter(Reach == 7) %>% 
   sample_n(5000) 
-qqPlot(dat_r_R7$DistanceDry); shapiro.test(dat_r_R7$DistanceDry) #NOT normal zero inflated
-qqPlot(log10(dat_r_R7$DistanceDry+1)); shapiro.test(log10(dat_r_R7$DistanceDry+1)) #Log transform NOT normal zero inflated
+qqPlot(dat_r_R7$DistanceDry); shapiro.test(dat_r_R7$DistanceDry) 
+qqPlot(log10(dat_r_R7$DistanceDry+1)); shapiro.test(log10(dat_r_R7$DistanceDry+1)) 
+qqPlot((dat_r_R7$DistanceDry)^2); shapiro.test((dat_r_R7$DistanceDry)^2)
+qqPlot(sqrt(dat_r_R7$DistanceDry)); shapiro.test((dat_r_R7$DistanceDry))
 
 dat_r_R8 <- dat %>% 
-  filter(Reach == 5) %>% 
+  filter(Reach == 8) %>% 
   sample_n(5000) 
-qqPlot(dat_r_R8$DistanceDry); shapiro.test(dat_r_R8$DistanceDry) #NOT normal zero inflated
-qqPlot(log10(dat_r_R8$DistanceDry+1)); shapiro.test(log10(dat_r_R8$DistanceDry+1)) #Log transform NOT normal zero inflated
+qqPlot(dat_r_R8$DistanceDry); shapiro.test(dat_r_R8$DistanceDry) 
+qqPlot(log10(dat_r_R8$DistanceDry+1)); shapiro.test(log10(dat_r_R8$DistanceDry+1)) 
+qqPlot((dat_r_R8$DistanceDry)^2); shapiro.test((dat_r_R8$DistanceDry)^2)
+qqPlot(sqrt(dat_r_R8$DistanceDry)); shapiro.test((dat_r_R8$DistanceDry))
 
 
 #Response Var - Annual Dry river mile ####
@@ -135,16 +149,19 @@ ggplot(data=dat1, aes(x=RM, y=Sum_days_rm_dry))+
   ylab("Number of days dry")+
   xlab("River Mile")
 
-
-
-
-
+#normality
+qqPlot(dat1$Sum_days_rm_dry); shapiro.test(dat1$Sum_days_rm_dry)
+qqPlot(log(dat1$Sum_days_rm_dry+1)); shapiro.test(log(dat1$Sum_days_rm_dry+1))
+qqPlot((dat1$Sum_days_rm_dry)^2); shapiro.test((dat1$Sum_days_rm_dry)^2)
+qqPlot(sqrt(dat1$Sum_days_rm_dry)); shapiro.test(sqrt(dat1$Sum_days_rm_dry))
 
 #Response Var - Daily Dry RM ####
 dat2 <- read_csv("Data/Processed/DailyDryRM.csv")
 
+#summaries
+
 summary(dat2)
-with(dat2, table(RM, Condition.b))
+temp <- as.data.frame(with(dat2, table(RM, Condition.b)))
 
 ggplot(data = temp, aes(x=RM, y=Freq, color=Condition.b))+
   geom_point()+
@@ -236,7 +253,7 @@ dat3_r_R5 <- dat3 %>%
   filter(Reach == 5) %>% 
   sample_n(5000) 
 
-dat3_r_R6 <- dat3 %>% 
+dat3_r_R8 <- dat3 %>% 
   filter(Reach == 6) %>% 
   sample_n(5000) 
 
@@ -254,10 +271,10 @@ qqPlot(log10(dat3_r_R5$Ag_DCU_cfs+1)); shapiro.test(log10(dat3_r_R5$Ag_DCU_cfs+1
 qqPlot((dat3_r_R5$Ag_DCU_cfs)^2); shapiro.test((dat3_r_R5$Ag_DCU_cfs)^2)
 qqPlot(sqrt(dat3_r_R5$Ag_DCU_cfs)); shapiro.test(sqrt(dat3_r_R5$Ag_DCU_cfs))
 
-qqPlot(dat3_r_R6$Ag_DCU_cfs); shapiro.test(dat3_r_R6$Ag_DCU_cfs) 
-qqPlot(log10(dat3_r_R6$Ag_DCU_cfs+1)); shapiro.test(log10(dat3_r_R6$Ag_DCU_cfs+1)) 
-qqPlot((dat3_r_R6$Ag_DCU_cfs)^2); shapiro.test((dat3_r_R6$Ag_DCU_cfs)^2)
-qqPlot(sqrt(dat3_r_R6$Ag_DCU_cfs)); shapiro.test(sqrt(dat3_r_R6$Ag_DCU_cfs))
+qqPlot(dat3_r_R8$Ag_DCU_cfs); shapiro.test(dat3_r_R8$Ag_DCU_cfs) 
+qqPlot(log10(dat3_r_R8$Ag_DCU_cfs+1)); shapiro.test(log10(dat3_r_R8$Ag_DCU_cfs+1)) 
+qqPlot((dat3_r_R8$Ag_DCU_cfs)^2); shapiro.test((dat3_r_R8$Ag_DCU_cfs)^2)
+qqPlot(sqrt(dat3_r_R8$Ag_DCU_cfs)); shapiro.test(sqrt(dat3_r_R8$Ag_DCU_cfs))
 
 qqPlot(dat3_r_R8$Ag_DCU_cfs); shapiro.test(dat3_r_R8$Ag_DCU_cfs) 
 qqPlot(log10(dat3_r_R8$Ag_DCU_cfs+1)); shapiro.test(log10(dat3_r_R8$Ag_DCU_cfs+1)) 
@@ -275,10 +292,10 @@ qqPlot(log10(dat3_r_R5$Riparian_DCU_cfs+1)); shapiro.test(log10(dat3_r_R5$Ripari
 qqPlot((dat3_r_R5$Riparian_DCU_cfs)^2); shapiro.test((dat3_r_R5$Riparian_DCU_cfs)^2)
 qqPlot(sqrt(dat3_r_R5$Riparian_DCU_cfs)); shapiro.test(sqrt(dat3_r_R5$Riparian_DCU_cfs))
 
-qqPlot(dat3_r_R6$Riparian_DCU_cfs); shapiro.test(dat3_r_R6$Riparian_DCU_cfs) 
-qqPlot(log10(dat3_r_R6$Riparian_DCU_cfs+1)); shapiro.test(log10(dat3_r_R6$Riparian_DCU_cfs+1)) 
-qqPlot((dat3_r_R6$Riparian_DCU_cfs)^2); shapiro.test((dat3_r_R6$Riparian_DCU_cfs)^2)
-qqPlot(sqrt(dat3_r_R6$Riparian_DCU_cfs)); shapiro.test(sqrt(dat3_r_R6$Riparian_DCU_cfs))
+qqPlot(dat3_r_R8$Riparian_DCU_cfs); shapiro.test(dat3_r_R8$Riparian_DCU_cfs) 
+qqPlot(log10(dat3_r_R8$Riparian_DCU_cfs+1)); shapiro.test(log10(dat3_r_R8$Riparian_DCU_cfs+1)) 
+qqPlot((dat3_r_R8$Riparian_DCU_cfs)^2); shapiro.test((dat3_r_R8$Riparian_DCU_cfs)^2)
+qqPlot(sqrt(dat3_r_R8$Riparian_DCU_cfs)); shapiro.test(sqrt(dat3_r_R8$Riparian_DCU_cfs))
 
 qqPlot(dat3_r_R7$Riparian_DCU_cfs); shapiro.test(dat3_r_R7$Riparian_DCU_cfs) 
 qqPlot(log10(dat3_r_R7$Riparian_DCU_cfs+1)); shapiro.test(log10(dat3_r_R7$Riparian_DCU_cfs+1)) 
@@ -296,10 +313,10 @@ qqPlot(log10(dat3_r_R5$OpenWater_DCU_cfs+1)); shapiro.test(log10(dat3_r_R5$OpenW
 qqPlot((dat3_r_R5$OpenWater_DCU_cfs)^2); shapiro.test((dat3_r_R5$OpenWater_DCU_cfs)^2)
 qqPlot(sqrt(dat3_r_R5$OpenWater_DCU_cfs)); shapiro.test(sqrt(dat3_r_R5$OpenWater_DCU_cfs))
 
-qqPlot(dat3_r_R6$OpenWater_DCU_cfs); shapiro.test(dat3_r_R6$OpenWater_DCU_cfs) 
-qqPlot(log10(dat3_r_R6$OpenWater_DCU_cfs+1)); shapiro.test(log10(dat3_r_R6$OpenWater_DCU_cfs+1))
-qqPlot((dat3_r_R6$OpenWater_DCU_cfs)^2); shapiro.test((dat3_r_R6$OpenWater_DCU_cfs)^2)
-qqPlot(sqrt(dat3_r_R6$OpenWater_DCU_cfs)); shapiro.test(sqrt(dat3_r_R6$OpenWater_DCU_cfs))
+qqPlot(dat3_r_R8$OpenWater_DCU_cfs); shapiro.test(dat3_r_R8$OpenWater_DCU_cfs) 
+qqPlot(log10(dat3_r_R8$OpenWater_DCU_cfs+1)); shapiro.test(log10(dat3_r_R8$OpenWater_DCU_cfs+1))
+qqPlot((dat3_r_R8$OpenWater_DCU_cfs)^2); shapiro.test((dat3_r_R8$OpenWater_DCU_cfs)^2)
+qqPlot(sqrt(dat3_r_R8$OpenWater_DCU_cfs)); shapiro.test(sqrt(dat3_r_R8$OpenWater_DCU_cfs))
 
 qqPlot(dat3_r_R7$OpenWater_DCU_cfs); shapiro.test(dat3_r_R7$OpenWater_DCU_cfs) 
 qqPlot(log10(dat3_r_R7$OpenWater_DCU_cfs+1)); shapiro.test(log10(dat3_r_R7$OpenWater_DCU_cfs+1)) 
@@ -317,10 +334,10 @@ qqPlot(log10(dat3_r_R5$Urban_DCU_cfs+1)); shapiro.test(log10(dat3_r_R5$Urban_DCU
 qqPlot((dat3_r_R5$Urban_DCU_cfs)^2); shapiro.test((dat3_r_R5$Urban_DCU_cfs)^2)
 qqPlot(sqrt(dat3_r_R5$Urban_DCU_cfs)); shapiro.test(sqrt(dat3_r_R5$Urban_DCU_cfs))
 
-qqPlot(dat3_r_R6$Urban_DCU_cfs); shapiro.test(dat3_r_R6$Urban_DCU_cfs) 
-qqPlot(log10(dat3_r_R6$Urban_DCU_cfs+1)); shapiro.test(log10(dat3_r_R6$Urban_DCU_cfs+1))
-qqPlot((dat3_r_R6$Urban_DCU_cfs)^2); shapiro.test((dat3_r_R6$Urban_DCU_cfs)^2)
-qqPlot(sqrt(dat3_r_R6$Urban_DCU_cfs)); shapiro.test(sqrt(dat3_r_R6$Urban_DCU_cfs))
+qqPlot(dat3_r_R8$Urban_DCU_cfs); shapiro.test(dat3_r_R8$Urban_DCU_cfs) 
+qqPlot(log10(dat3_r_R8$Urban_DCU_cfs+1)); shapiro.test(log10(dat3_r_R8$Urban_DCU_cfs+1))
+qqPlot((dat3_r_R8$Urban_DCU_cfs)^2); shapiro.test((dat3_r_R8$Urban_DCU_cfs)^2)
+qqPlot(sqrt(dat3_r_R8$Urban_DCU_cfs)); shapiro.test(sqrt(dat3_r_R8$Urban_DCU_cfs))
 
 qqPlot(dat3_r_R7$Urban_DCU_cfs); shapiro.test(dat3_r_R7$Urban_DCU_cfs) 
 qqPlot(log10(dat3_r_R7$Urban_DCU_cfs+1)); shapiro.test(log10(dat3_r_R7$Urban_DCU_cfs+1)) 
@@ -338,10 +355,10 @@ qqPlot(log10(dat3_r_R5$Rain_cfs+1)); shapiro.test(log10(dat3_r_R5$Rain_cfs+1))
 qqPlot((dat3_r_R5$Rain_cfs)^2); shapiro.test((dat3_r_R5$Rain_cfs)^2)
 qqPlot(sqrt(dat3_r_R5$Rain_cfs)); shapiro.test(sqrt(dat3_r_R5$Rain_cfs))
 
-qqPlot(dat3_r_R6$Rain_cfs); shapiro.test(dat3_r_R6$Rain_cfs) 
-qqPlot(log10(dat3_r_R6$Rain_cfs+1)); shapiro.test(log10(dat3_r_R6$Rain_cfs+1))
-qqPlot((dat3_r_R6$Rain_cfs)^2); shapiro.test((dat3_r_R6$Rain_cfs)^2)
-qqPlot(sqrt(dat3_r_R6$Rain_cfs)); shapiro.test(sqrt(dat3_r_R6$Rain_cfs))
+qqPlot(dat3_r_R8$Rain_cfs); shapiro.test(dat3_r_R8$Rain_cfs) 
+qqPlot(log10(dat3_r_R8$Rain_cfs+1)); shapiro.test(log10(dat3_r_R8$Rain_cfs+1))
+qqPlot((dat3_r_R8$Rain_cfs)^2); shapiro.test((dat3_r_R8$Rain_cfs)^2)
+qqPlot(sqrt(dat3_r_R8$Rain_cfs)); shapiro.test(sqrt(dat3_r_R8$Rain_cfs))
 
 qqPlot(dat3_r_R7$Rain_cfs); shapiro.test(dat3_r_R7$Rain_cfs) 
 qqPlot(log10(dat3_r_R7$Rain_cfs+1)); shapiro.test(log10(dat3_r_R7$Rain_cfs+1)) 
@@ -359,10 +376,10 @@ qqPlot(log10(dat3_r_R5$five_day_avg_URGWOM_cfs+1)); shapiro.test(log10(dat3_r_R5
 qqPlot((dat3_r_R5$five_day_avg_URGWOM_cfs)^2); shapiro.test((dat3_r_R5$five_day_avg_URGWOM_cfs)^2)
 qqPlot(sqrt(dat3_r_R5$five_day_avg_URGWOM_cfs)); shapiro.test(sqrt(dat3_r_R5$five_day_avg_URGWOM_cfs))
 
-qqPlot(dat3_r_R6$five_day_avg_URGWOM_cfs); shapiro.test(dat3_r_R6$five_day_avg_URGWOM_cfs) 
-qqPlot(log10(dat3_r_R6$five_day_avg_URGWOM_cfs+1)); shapiro.test(log10(dat3_r_R6$five_day_avg_URGWOM_cfs+1))
-qqPlot((dat3_r_R6$five_day_avg_URGWOM_cfs)^2); shapiro.test((dat3_r_R6$five_day_avg_URGWOM_cfs)^2)
-qqPlot(sqrt(dat3_r_R6$five_day_avg_URGWOM_cfs)); shapiro.test(sqrt(dat3_r_R6$five_day_avg_URGWOM_cfs))
+qqPlot(dat3_r_R8$five_day_avg_URGWOM_cfs); shapiro.test(dat3_r_R8$five_day_avg_URGWOM_cfs) 
+qqPlot(log10(dat3_r_R8$five_day_avg_URGWOM_cfs+1)); shapiro.test(log10(dat3_r_R8$five_day_avg_URGWOM_cfs+1))
+qqPlot((dat3_r_R8$five_day_avg_URGWOM_cfs)^2); shapiro.test((dat3_r_R8$five_day_avg_URGWOM_cfs)^2)
+qqPlot(sqrt(dat3_r_R8$five_day_avg_URGWOM_cfs)); shapiro.test(sqrt(dat3_r_R8$five_day_avg_URGWOM_cfs))
 
 qqPlot(dat3_r_R7$five_day_avg_URGWOM_cfs); shapiro.test(dat3_r_R7$five_day_avg_URGWOM_cfs) 
 qqPlot(log10(dat3_r_R7$five_day_avg_URGWOM_cfs+1)); shapiro.test(log10(dat3_r_R7$five_day_avg_URGWOM_cfs+1)) 
@@ -374,7 +391,7 @@ qqPlot(log10(dat3_r_R8$five_day_avg_URGWOM_cfs+1)); shapiro.test(log10(dat3_r_R8
 qqPlot((dat3_r_R8$five_day_avg_URGWOM_cfs)^2); shapiro.test((dat3_r_R8$five_day_avg_URGWOM_cfs)^2)
 qqPlot(sqrt(dat3_r_R8$five_day_avg_URGWOM_cfs)); shapiro.test(sqrt(dat3_r_R8$five_day_avg_URGWOM_cfs))
 
-#ET Toolbox Var correlations ####
+#Predictor Var - ET Toolbox correlations ####
 
 #ET toolbox predictors
 dat3 <- read_csv("Data/Processed/ET_Toolbox_R_6_8.csv")
@@ -403,7 +420,7 @@ tab <-  round(as.data.frame(cor(cov(temp[,7:13], use="na.or.complete"))), 2)
 tab[abs(tab)<0.4] <-  "no_corr"
 View(tab)
 
-write.csv(tab, "Data/Processed/R6_toolbox_corr.csv")
+write.csv(tab, "Data/Processed/R8_toolbox_corr.csv")
 
 # reduce data down to one Reach7
 temp <-  dat3 %>% filter(Reach=="7") 
@@ -446,7 +463,7 @@ ggplot(dat4, aes(x=Year, y = Index_KAF))+
 #normality
 qqPlot(dat4$Index_KAF); shapiro.test(dat4$Index_KAF) 
 
-#Bosque Gage ####
+#Predictor Var - Bosque Gage ####
 #load data
 dat5 <- read_csv("Data/Processed/BosqueGage2007_2018.csv")
 
@@ -481,3 +498,28 @@ qqPlot(dat7$Tot_diversion_cfs); shapiro.test(dat7$Tot_diversion_cfs)
 qqPlot(log10(dat7$Tot_diversion_cfs+1)); shapiro.test(log10(dat7$Tot_diversion_cfs+1)) 
 qqPlot((dat7$Tot_diversion_cfs)^2); shapiro.test((dat7$Tot_diversion_cfs)^2)
 qqPlot(sqrt(dat7$Tot_diversion_cfs)); shapiro.test(sqrt(dat7$Tot_diversion_cfs))
+
+#Predictor Var - Diversion correlations ####
+dat8 <- read_csv("Data/Processed/SanAcaciaDiv.csv")
+dat9 <- read_csv("Data/Processed/IsletaDiv.csv")
+
+dat8 <- dat8[-(4011),]
+dat8 <- dat8 %>% 
+  mutate(Date = as.Date(Date)) %>% 
+  complete(Date = seq.Date(min(Date), max(Date), by = "day"), 
+           fill = list(value = NA)) %>% 
+  filter(Date > "2003-06-25")
+
+Diversions <- cbind(dat8, dat9)
+Diversions <- Diversions %>% 
+  select(Mean_daily_discharge_cfs,Tot_diversion_cfs) %>% 
+  rename(SanAcaciaDiv = Mean_daily_discharge_cfs, IsletaDiv = Tot_diversion_cfs )
+
+# plot correlations (of data columns only)
+pairs.panels(Diversions[,1:2], scale=T)
+pairs.panels(Diversions[,1:2], scale=F)
+# make table of correlations (I am rounding and replacing low values with text so that it is easier to see results)
+tab <-  round(as.data.frame(cor(cov(Diversions[,1:2], use="na.or.complete"))), 2)
+tab[abs(tab)<0.4] <-  "no_corr"
+View(tab)
+
