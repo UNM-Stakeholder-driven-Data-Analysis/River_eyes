@@ -7,6 +7,10 @@ library(tidyverse)
 library(car) #qq plot fxn
 library(lubridate) #dates
 library(psych) #correlation
+library(janitor) #duplication
+
+library(tsibble) # useful for creating time series objects
+library(forecast) # for autotemporal Acf fxn
 
 library(lme4) # for creating mixed models
 library(car) # for Anova(), vif()
@@ -125,7 +129,119 @@ qqPlot((dat_r_R8$DistanceDry)^2); shapiro.test((dat_r_R8$DistanceDry)^2)
 qqPlot(sqrt(dat_r_R8$DistanceDry)); shapiro.test((dat_r_R8$DistanceDry))
 
 
-#Response Var - Annual Dry river mile ####
+#Response Var - Daily Extent Dry Temporal Auotcorrelation Reaches 5 & 7 ####
+#Reach 5 
+dat10 <- read_csv("Data/Processed/DailyExtentDry.csv")
+
+#organizing data to get a single date and distance dry
+#date duplication even when by reach
+dat11 <- dat10 %>% 
+  filter(Reach==5)  
+
+#decided to sum by day and create a time series 
+dat11 <- dat10 %>% 
+  group_by(Date) %>% 
+  summarise(Sum_dist_dry= sum(DistanceDry)) %>% 
+  arrange(Date) %>% 
+  as_tsibble(index = Date)
+
+class(dat11)
+head(dat11)
+minday <- as.Date("2003-01-01")
+
+dat11_ts = ts(dat11$Sum_dist_dry, frequency = 365, start = c(year(minday), 
+                                                             as.numeric(format(minday, "%j"))))
+print(dat11_ts, calendar = T) #not sure if this is correct.....:( 
+plot(dat11_ts)
+
+### check for temporal autocorrelation in the ts
+# using forecast pkg's Acf 
+# Note the different options for dealing with NAs and how this changes the results 
+# (see ?na.fail and ?Acf for details). 
+forecast::Acf(dat11_ts, lag.max = 365, na.action = na.contiguous) 
+forecast::Pacf(dat11_ts, lag.max = 365, na.action = na.contiguous)
+
+#See what happens when you group by month
+dat11 <- dat10 %>% 
+  filter(Reach==5) 
+
+dat12_ts <- dat11 %>%
+  mutate(Year = lubridate::year(Date)) %>%
+  mutate(Month = lubridate::month(Date)) %>%
+  group_by(Reach, Year, Month) %>%
+  summarise(Sum_dist_dry = sum(DistanceDry)) %>%
+  mutate(Date2 = paste(Year, Month, "01", sep="-")) %>%
+  mutate(Date2 = as.Date(Date2)) %>% 
+  arrange(Date2) %>% 
+  as_tsibble()
+
+class(dat12_ts)
+head(dat12_ts)
+minday <- as.Date("2003-01-01")
+
+dat12_ts = ts(dat12_ts$Sum_dist_dry, frequency = 12, start = c(2003,01))
+print(dat12_ts, calendar = T) #not sure if this is correct.....:( 
+plot(dat12_ts)
+
+forecast::Acf(dat12_ts, lag.max = 12, na.action = na.contiguous) 
+forecast::Pacf(dat12_ts, lag.max = 12, na.action = na.contiguous)
+
+#Reach 7 
+dat10 <- read_csv("Data/Processed/DailyExtentDry.csv")
+
+#organizing data to get a single date and distance dry
+#date duplication even when by reach
+dat13 <- dat10 %>% 
+  filter(Reach==7)  
+
+#decided to sum by day and create a time series 
+dat13 <- dat10 %>% 
+  group_by(Date) %>% 
+  summarise(Sum_dist_dry= sum(DistanceDry)) %>% 
+  arrange(Date) %>% 
+  as_tsibble(index = Date)
+
+class(dat13)
+head(dat13)
+minday <- as.Date("2003-01-01")
+
+dat13_ts = ts(dat13$Sum_dist_dry, frequency = 365, start = c(year(minday), 
+                                                             as.numeric(format(minday, "%j"))))
+print(dat13_ts, calendar = T) #not sure if this is correct.....:( 
+plot(dat13_ts)
+
+### check for temporal autocorrelation in the ts
+# using forecast pkg's Acf 
+# Note the different options for dealing with NAs and how this changes the results 
+# (see ?na.fail and ?Acf for details). 
+forecast::Acf(dat13_ts, lag.max = 365, na.action = na.contiguous) 
+forecast::Pacf(dat13_ts, lag.max = 365, na.action = na.contiguous)
+
+#See what happens when you group by month
+dat14 <- dat10 %>% 
+  filter(Reach==7) 
+
+dat15_ts <- dat14 %>%
+  mutate(Year = lubridate::year(Date)) %>%
+  mutate(Month = lubridate::month(Date)) %>%
+  group_by(Reach, Year, Month) %>%
+  summarise(Sum_dist_dry = sum(DistanceDry)) %>%
+  mutate(Date2 = paste(Year, Month, "01", sep="-")) %>%
+  mutate(Date2 = as.Date(Date2)) %>% 
+  arrange(Date2) %>% 
+  as_tsibble()
+
+class(dat15_ts)
+head(dat15_ts)
+
+dat15_ts = ts(dat15_ts$Sum_dist_dry, frequency = 15, start = c(2003,01))
+print(dat15_ts, calendar = T) #not sure if this is correct.....:( 
+plot(dat15_ts)
+
+forecast::Acf(dat15_ts, lag.max = 12, na.action = na.contiguous) 
+forecast::Pacf(dat15_ts, lag.max = 12, na.action = na.contiguous)
+
+#Response Var - Annual Dry River Mile ####
 dat1 <- read_csv("Data/Processed/AnnualDryRM.csv")
 
 #Summary explore Annual Dry river mile
@@ -154,6 +270,34 @@ qqPlot(dat1$Sum_days_rm_dry); shapiro.test(dat1$Sum_days_rm_dry)
 qqPlot(log(dat1$Sum_days_rm_dry+1)); shapiro.test(log(dat1$Sum_days_rm_dry+1))
 qqPlot((dat1$Sum_days_rm_dry)^2); shapiro.test((dat1$Sum_days_rm_dry)^2)
 qqPlot(sqrt(dat1$Sum_days_rm_dry)); shapiro.test(sqrt(dat1$Sum_days_rm_dry))
+
+#Response Var - Annual Dry River Mile Temporal Auotcorrelation for RM 74####
+dat16 <- read_csv("Data/Processed/AnnualDryRM.csv")
+
+#looking at a river miles that had extensive drying each year 
+dat17 <- dat16 %>% 
+  filter(RM == 74)
+
+dat18_ts <- dat17 %>% 
+  mutate(Date3 = paste(Year, "01", "01", sep = "-")) %>% 
+  mutate(Date3 = as.Date((Date3))) %>% 
+  arrange(Date3) %>% 
+  as_tsibble(index = Date3)
+
+class(dat18_ts)
+head(dat18_ts)
+
+dat18_ts = ts(dat18_ts$Sum_days_rm_dry, frequency = 1, start = c(2003, 01))
+
+print(dat18_ts, calendar = T) #not sure if this is correct.....:( 
+plot(dat18_ts)
+
+### check for temporal autocorrelation in the ts
+# using forecast pkg's Acf 
+# Note the different options for dealing with NAs and how this changes the results 
+# (see ?na.fail and ?Acf for details). 
+forecast::Acf(dat18_ts, lag.max = 365, na.action = na.contiguous) 
+forecast::Pacf(dat18_ts, lag.max = 365, na.action = na.contiguous)
 
 #Response Var - Daily Dry RM ####
 dat2 <- read_csv("Data/Processed/DailyDryRM.csv")
@@ -206,7 +350,31 @@ dat2 %>%
   ylab("River dry (1) or wet (0)")+
   scale_y_continuous(breaks = seq(0,1))
 
-#Predictor Var - ET Toolbox reach 6-8####
+#Response Var - Daily Extent Dry Temporal Auotcorrelation for RM 74####
+dat19 <- read_csv("Data/Processed/DailyDryRM.csv")
+
+#looking at a river miles that had extensive drying each year 
+dat20 <- dat19 %>% 
+  filter(RM == 74)
+
+dat20_ts <- dat20 %>% 
+  arrange(Date) %>% 
+  as_tsibble(index = Date)
+
+class(dat20_ts)
+head(dat20_ts)
+minday <- as.Date("2003-01-01")
+
+dat20_ts = ts(dat20_ts$Condition.b, frequency = 365, start = c(year(minday), 
+                                                               as.numeric(format(minday, "%j"))))
+
+print(dat20_ts, calendar = T) #not sure if this is correct.....:( 
+plot(dat20_ts)
+
+forecast::Acf(dat20_ts, lag.max = 365, na.action = na.contiguous) 
+forecast::Pacf(dat20_ts, lag.max = 365, na.action = na.contiguous)
+
+#Predictor Var - ET Toolbox Reach 6-8####
 dat3 <- read_csv("Data/Processed/ET_Toolbox_R_6_8.csv")
 dat3$Reach <- as.factor(dat3$Reach)
 
@@ -391,7 +559,7 @@ qqPlot(log10(dat3_r_R8$five_day_avg_URGWOM_cfs+1)); shapiro.test(log10(dat3_r_R8
 qqPlot((dat3_r_R8$five_day_avg_URGWOM_cfs)^2); shapiro.test((dat3_r_R8$five_day_avg_URGWOM_cfs)^2)
 qqPlot(sqrt(dat3_r_R8$five_day_avg_URGWOM_cfs)); shapiro.test(sqrt(dat3_r_R8$five_day_avg_URGWOM_cfs))
 
-#Predictor Var - ET Toolbox correlations ####
+#Predictor Var - ET Toolbox Correlations ####
 
 #ET toolbox predictors
 dat3 <- read_csv("Data/Processed/ET_Toolbox_R_6_8.csv")
@@ -448,7 +616,7 @@ View(tab)
 
 write.csv(tab, "Data/Processed/R8_toolbox_corr.csv")
 
-#Predictor Var - Otowi index ####
+#Predictor Var - Otowi Index ####
 dat4 <- read_csv("Data/Raw/Otowi Index Supply.csv")
 names(dat4) <- c("Year","Index_KAF","Null")
 dat4 <- dat4 %>% 
@@ -499,7 +667,7 @@ qqPlot(log10(dat7$Tot_diversion_cfs+1)); shapiro.test(log10(dat7$Tot_diversion_c
 qqPlot((dat7$Tot_diversion_cfs)^2); shapiro.test((dat7$Tot_diversion_cfs)^2)
 qqPlot(sqrt(dat7$Tot_diversion_cfs)); shapiro.test(sqrt(dat7$Tot_diversion_cfs))
 
-#Predictor Var - Diversion correlations ####
+#Predictor Var - Diversion Correlations ####
 dat8 <- read_csv("Data/Processed/SanAcaciaDiv.csv")
 dat9 <- read_csv("Data/Processed/IsletaDiv.csv")
 
@@ -522,4 +690,6 @@ pairs.panels(Diversions[,1:2], scale=F)
 tab <-  round(as.data.frame(cor(cov(Diversions[,1:2], use="na.or.complete"))), 2)
 tab[abs(tab)<0.4] <-  "no_corr"
 View(tab)
+
+
 
