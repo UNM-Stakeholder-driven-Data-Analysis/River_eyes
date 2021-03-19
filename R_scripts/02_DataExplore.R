@@ -309,9 +309,10 @@ temp <- as.data.frame(with(dat2, table(RM, Condition.b)))
 
 ggplot(data = temp, aes(x=RM, y=Freq, color=Condition.b))+
   geom_point()+
-  scale_color_discrete(name="River Condition", labels=(c("Wet", "Dry")))+
-  scale_x_discrete(breaks = seq(50,170,10))+
-  labs(x="River mile")
+  scale_color_manual(values=c("blue", "red"),
+                       name="Condition", labels=(c("Wet", "Dry")))+
+  scale_x_discrete(breaks = seq(40,180,10))+
+  labs(x="River mile", y="Number of days (2003-2018)")
 
 dat2 %>% 
   filter(Reach==5) %>% 
