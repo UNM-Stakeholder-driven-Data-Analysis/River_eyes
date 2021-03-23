@@ -33,34 +33,48 @@ dat <- dat %>%
   rename(Date=X1_03, Mean_cfs=X1_04) %>% 
   mutate(Date = as.Date(Date))
 
-#write to file
-write.csv(dat,"Data/Processed/BosqueGage2007_2018.csv",row.names = FALSE)
-
 #Load data San Acacia gage data####
-dat <- read_csv("Data/Raw/SanAcaciaGage2003_2018.csv")
+dat2 <- read_csv("Data/Raw/SanAcaciaGage2003_2018.csv")
 
 #Format San Acacia gage data columns####
 #rename column
-colnames(dat)[1] <- "X1"
+colnames(dat2)[1] <- "X1"
 
 #text to columns 
-dat <- cSplit(dat, "X1", sep = " ", type.convert = F)
-dat <- as.data.frame(dat)
+dat2 <- cSplit(dat2, "X1", sep = " ", type.convert = F)
+dat2 <- as.data.frame(dat2)
 
 #remove rows and columns that aren't needed
-dat <- dat[-c(5:15)] 
-dat <- dat[-c(1:2)] 
-dat <- dat[-(1:30),]
+dat2 <- dat2[-c(5:15)] 
+dat2 <- dat2[-c(1:2)] 
+dat2 <- dat2[-(1:30),]
 
 #name columns
-dat <- dat %>% 
+dat2 <- dat2 %>% 
   rename(Date=X1_03, Mean_cfs=X1_04) %>% 
   mutate(Mean_cfs = as.numeric(Mean_cfs)) %>% 
-  mutate(Date = as.Date(Date))
+  mutate(Date = as.Date(Date)) %>% 
+  rename(Mean_cfs_SanAcacia = Mean_cfs)
+
+
+#join the two gages to one dataframe####
+join_data <- dat2 %>% 
+  left_join(dat, by="Date") %>% 
+  rename(Mean_cfs_BosFarms = Mean_cfs)
+
 
 #write to file
-write.csv(dat,"Data/Processed/SanAcaciaGage2003_2018.csv",row.names = FALSE)
+write.csv(join_data,"Data/Processed/RioGrandeGages2003_2018.csv",row.names = FALSE)
 
-test <- read_csv("Data/Processed/SanAcaciaGage2003_2018.csv")
+
+test <- read_csv("Data/Processed/RioGrandeGages2003_2018.csv", 
+                 col_types = cols(Mean_cfs = col_double()))
+
+
+
+
+
+
+
 
 
