@@ -8,7 +8,7 @@ library(tidyverse)
 #load data sets #####
 
 #ET toolbox: Ag depletion, riparian ET, water evap, precip
-datToolbox <- read_csv("Data/Processed/ET_Toolbox_R_6_8.csv")
+datToolbox <- read_csv("Data/Processed/ET_Toolbox_Corrected.csv")
 
 temp <- data.frame(rep(NA, each=5844))
 colnames(temp)[1] <- "empty"
@@ -81,4 +81,29 @@ datOtowi <- datOtowi %>%
   filter(Year>2002 & Year<2019)
 
 write.csv(datOtowi,"Data/Processed/OtowiIndex.csv")
-  
+
+#add mean and sum ET Toolbox as variables
+dat <- read.csv("Data/Processed/Predictors.csv")
+
+dat_mn <- read.csv("Data/Processed/ET_Toolbox_Corrected_MeanReaches.csv") %>% 
+  select(-c("Tot_DCU_cfs", "Urban_DCU_cfs", "Tot_URGWOM_cfs", "five_day_avg_URGWOM_cfs", "ten_day_avg_URGWOM_cfs",
+            "Use_to_date_since_Jan1")) %>% 
+  rename(Date2=Date, Ag_mn = Ag_DCU_cfs, Rip_mn=Riparian_DCU_cfs, OW_mn=OpenWater_DCU_cfs, Rain_mn=Rain_cfs)
+
+dat_sm <- read.csv("Data/Processed/ET_Toolbox_Corrected_SumReaches.csv") %>% 
+  select(-c("Tot_DCU_cfs", "Urban_DCU_cfs", "Tot_URGWOM_cfs", "five_day_avg_URGWOM_cfs", "ten_day_avg_URGWOM_cfs",
+            "Use_to_date_since_Jan1")) %>% 
+  rename(Date3=Date, Ag_sum = Ag_DCU_cfs, Rip_sum=Riparian_DCU_cfs, OW_sum=OpenWater_DCU_cfs, Rain_sum=Rain_cfs)
+
+Predictors2 <- cbind(dat, dat_mn, dat_sm) %>% 
+  select(Date2, Date3, everything()) %>% 
+  select(-c("Date2", "Date3", MeanPERCN:MeanCACCN))
+
+write.csv(Predictors2, "Data/Processed/Predictors_mn_sum.csv", row.names = FALSE)
+
+test <- read.csv("Data/Processed/Predictors_mn_sum.csv")
+
+ggplot(test, aes(x=Date, y=Ag_sum))+
+  geom_point()+
+  ggtitle("Rio Grande reaches - Agriculture")+
+  ylab("Depletion (cfs)")

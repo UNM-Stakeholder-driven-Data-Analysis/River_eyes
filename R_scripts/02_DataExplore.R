@@ -376,14 +376,10 @@ forecast::Acf(dat20_ts, lag.max = 365, na.action = na.contiguous)
 forecast::Pacf(dat20_ts, lag.max = 365, na.action = na.contiguous)
 
 #Predictor Var - ET Toolbox Reach 6-8####
-dat3 <- read_csv("Data/Processed/ET_Toolbox_R_6_8.csv")
-dat3$Reach <- as.factor(dat3$Reach)
+dat3 <- read_csv("Data/Processed/Predictors_mn_sum.csv")
 
-with(dat3, table(Reach, Ag_DCU_cfs))
-
-ggplot(dat3, aes(x=Date, y=Ag_DCU_cfs))+
+ggplot(dat3, aes(x=Date, y=Ag_DCU_cfs_5))+
   geom_point()+
-  facet_wrap(~Reach)+
   ggtitle("Rio Grande reaches - Agriculture")+
   ylab("Depletion (cfs)")
 
