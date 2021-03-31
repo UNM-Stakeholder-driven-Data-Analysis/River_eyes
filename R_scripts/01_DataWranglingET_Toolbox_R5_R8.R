@@ -9,6 +9,7 @@ library(tidyverse)
 library(splitstackshape)
 library(stringi)
 library(janitor)
+library(cowplot)
 
 ##### R5 ####
 #2018
@@ -2403,32 +2404,56 @@ Et_data_R8 <- Et_data_R8 %>%
 
 write.csv(Et_data_R8,"Data/Processed/ET_data_R8.csv", row.names = FALSE)
 
-#### COMBINE All REACHES TO A FILE #####
+#### Baseline Correction #####
 R5 <- read_csv("Data/Processed/ET_data_R5.csv")
+ 
+ #figure out what year the change occurred and it looks like Jan 1 of 2011
+par(mfrow = c(1,2))
+ggplot(R5, aes(x=Date, y=Ag_DCU_cfs))+
+  geom_point()+
+  ggtitle("Rio Grande reaches - Agriculture")+
+  ylab("Depletion (cfs)")+
+  scale_x_date(date_breaks = "year")+
+  theme(axis.text.x=element_text(angle = 45))
+
+#reach 5 first (R5_d1) and second (R5_d2) decade
+R5_d1 <- R5 %>% 
+  filter(Year < 2011) %>% 
+  select(Date, Year, Ag_DCU_cfs, Riparian_DCU_cfs, OpenWater_DCU_cfs, Riparian_DCU_cfs, Rain_cfs)
+
+R5_d1_m <- R5_d1 %>% 
+  summarise(across(Ag_DCU_cfs:Rain_cfs, ~mean(.x, na.rm=TRUE)))
+
+R5_d2 <- R5 %>% 
+  filter(Year >= 2011) %>% 
+  select(Date, Year, Ag_DCU_cfs, Riparian_DCU_cfs, OpenWater_DCU_cfs, Riparian_DCU_cfs, Rain_cfs)
+
+R5_d2_m <- R5_d2%>% 
+  summarise(across(Ag_DCU_cfs:Rain_cfs, ~mean(.x, na.rm=TRUE)))
+
+   #difference between mean of first and second data sets
+correc_R5 <- R5_d1_m - R5_d2_m 
+
+R5_d2_correc <- R5_d2 %>% 
+  mutate(Ag_5_cor = Ag_DCU_cfs + correc_R5$Ag_DCU_cfs) %>% 
+  mutate(Rip_5_cor = Riparian_DCU_cfs + correc_R5$Riparian_DCU_cfs) %>% 
+  mutate(Op_5_cor = OpenWater_DCU_cfs + correc_R5$OpenWater_DCU_cfs) %>% 
+  mutate(Rain_5_cor = Rain_cfs + correc_R5$Rain_cfs)
+
+ggplot(R5, aes(Date, Ag_DCU_cfs, col = "black")) + 
+  geom_point(size = 1) +
+  geom_point(data = R5_d2_correc, aes(Date, Ag_5_cor, col="red"))+
+  scale_color_manual(values=c("black", "red"),
+    name="Rio Grande \nET toolbox reach 5", labels=(c("uncorrected", "2003-2010 \n mean corrected")))+
+  ylab ("Agriculuture depletion (cfs)")+
+  scale_x_date(date_breaks = "year", date_labels = "%Y")+
+  theme(axis.text.x=element_text(angle = 90))
+
 R6 <- read_csv("Data/Processed/ET_data_R6.csv")
 R7 <- read_csv("Data/Processed/ET_data_R7.csv")
 R8 <- read_csv("Data/Processed/ET_data_R8.csv")
 
-ET_Toolbox_R_6_8 <- rbind(R5, R6,R7, R8)
 
-write.csv(ET_Toolbox_R_6_8, "Data/Processed/ET_Toolbox_R_6_8.csv", row.names = FALSE )
-
-
-# Baseline Correction DOES NOT SEEM TO HAVE BIG ENOUGH MAGNITUDE####
-dat <- read_csv("Data/Processed/ET_Toolbox_R_6_8.csv")
-
-#get first set of data and calculate mean of variables
-decade1 <- dat %>% 
-  filter(Year < 2011) %>% 
-  summarise(across(Tot_DCU_cfs:Use_to_date_since_Jan1, ~mean(.x, na.rm=TRUE))) 
-
-#get second set of data and calculate mean of variables
-decade2 <- dat %>% 
-  filter(Year > 2010) %>% 
-  summarise(across(Tot_DCU_cfs:Use_to_date_since_Jan1, ~mean(.x, na.rm=TRUE))) 
-
-#difference between mean of first and second data sets
-correction <- decade1-decade2 
 
 #add columns to be able to bind what will be subtracted from the second data set
 #making the first row the value that will be subtracted
@@ -2471,10 +2496,7 @@ finaldata <- finaldata %>%
   select(-c("Year", "Month", "Month.n", "Day")) %>% 
   select(Date, Reach, everything())
 
-ggplot(finaldata, aes(x=Date, y=Ag_DCU_cfs))+
-  geom_point()+
-  ggtitle("Rio Grande reaches - Agriculture")+
-  ylab("Depletion (cfs)")
+
 
 #Complete full date sequence ####
 test <- read.csv("Data/Processed/ET_Toolbox_Corrected.csv")
