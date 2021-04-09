@@ -29,3 +29,50 @@ dat %>%
   separate(col=Predictor, into = c("Type","Abrev","Abrev2", "Reach"))
 
 Mod -> glmer(Condition ~ SanAcacia_div + SanAcaciaGage + AgDepletion + Rain + Reach + (1|RM), data= dat, family="binomial")
+mod2 <- lmer(log(Sum_days_rm_dry+1) ~ Isleta_div + SanA_div + SanA_gage + Ag_yr_mn + (1|Year) +(1|RM), data=dat, REML = FALSE)
+qqnorm(resid(mod1))
+qqline(resid(mod1))
+car::vif(mod1)
+
+#comparing models and selection ####
+bbmle::AICtab(mod_null, mod_full, mod_ID_SD, mod_ID_OT, mod_SD_OT, mod_ID, mod_SD, mod_OT)
+bbmle::AICctab(mod_null, mod_full, mod_ID_SD, mod_ID_OT, mod_SD_OT, mod_ID, mod_SD, mod_OT)
+bbmle::BICtab(mod_null, mod_full, mod_ID_SD, mod_ID_OT, mod_SD_OT, mod_ID, mod_SD, mod_OT)
+
+#AICc and BIC have mod_ID_SD (Isleta and San Acacia diversions) as best AIC shows null
+car::Anova(mod_ID_SD, type = "III")
+mod_ID_SD
+
+#plot effects ####
+
+ #simple predictions with CIs
+plot(predictorEffect("Isleta_div_sum", mod_ID_SD))
+plot(predictorEffect("SanAcacia_div_sum", mod_ID_SD))
+plot(predictorEffects(mod_ID_SD, ~Isleta_div_sum + SanAcacia_div_sum))
+
+ #for Isleta with data points, effects, and CI
+effects_Isleta <- effects::effect(term="Isleta_div_sum", mod=mod_ID_SD)
+summary(effects_Isleta)
+x_Isleta <- as.data.frame(effects_Isleta)
+
+ggplot()+
+  geom_point(data=dat74rev, aes(Isleta_div_sum, DaysDry))+
+  geom_point(data=x_Isleta, aes(x=Isleta_div_sum, y=fit), color = "blue")+
+  geom_line(data=x_Isleta, aes(x=Isleta_div_sum, y=fit), color = "blue")+
+  geom_ribbon(data=x_Isleta, aes(x=Isleta_div_sum, ymin=lower, ymax=upper), alpha=0.3, fill="blue")+
+  labs(x="Isleta total annual diversion (cfs)", y="Days in a year river mile 74 was dry")+
+  scale_x_continuous(labels = scales::comma)
+
+#for SanAcacia with data points, effects, and CI
+effects_SanAcacia <- effects::effect(term="SanAcacia_div_sum", mod=mod_ID_SD)
+summary(effects_SanAcacia)
+x_SanAcacia <- as.data.frame(effects_SanAcacia)
+
+ggplot()+
+  geom_point(data=dat74rev, aes(SanAcacia_div_sum, DaysDry))+
+  geom_point(data=x_SanAcacia, aes(x=SanAcacia_div_sum, y=fit), color = "blue")+
+  geom_line(data=x_SanAcacia, aes(x=SanAcacia_div_sum, y=fit), color = "blue")+
+  geom_ribbon(data=x_SanAcacia, aes(x=SanAcacia_div_sum, ymin=lower, ymax=upper), alpha=0.3, fill="blue")+
+  labs(x="SanAcacia total annual diversion (cfs)", y="Days in a year river mile 74 was dry")+
+  scale_x_continuous(labels = scales::comma)
+
