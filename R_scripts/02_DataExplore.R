@@ -312,7 +312,12 @@ ggplot(data = temp, aes(x=RM, y=Freq, color=Condition.b))+
   scale_color_manual(values=c("blue", "red"),
                        name="Condition", labels=(c("Wet", "Dry")))+
   scale_x_discrete(breaks = seq(40,180,10))+
-  labs(x="River mile", y="Number of days (2003-2018)")
+  labs(x="River mile", y="Number of days (2003-2018)")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.border = element_blank(),
+        axis.line = element_line(color="black", size=1), panel.background = element_blank(), text=element_text(size =18),
+        legend.text = element_text(size=18))+
+  scale_y_continuous(labels = scales::comma)
+  
 
 dat2 %>% 
   filter(Reach==5) %>% 
@@ -628,12 +633,12 @@ ggplot(dat4, aes(x=Year, y = Index_KAF))+
 #normality
 qqPlot(dat4$Index_KAF); shapiro.test(dat4$Index_KAF) 
 
-#Predictor Var - Bosque Gage ####
+#Predictor Var - Bosque Gage ISSUESSSS!!!!! no bosque data :(####
 #load data
-dat5 <- read_csv("Data/Processed/BosqueGage2007_2018.csv")
+dat5 <- read_csv("Data/Processed/Predictors.csv")
 
 #plot data
-ggplot(dat5, aes(x=Date, y=Mean_cfs))+
+ggplot(dat5, aes(x=Date, y=Mean_cfs_BosFarms))+
   geom_point()
 
 #normality
@@ -642,16 +647,79 @@ qqPlot(log10(dat5$Mean_cfs+1)); shapiro.test(log10(dat5$Mean_cfs+1))
 qqPlot((dat5$Mean_cfs)^2); shapiro.test((dat5$Mean_cfs)^2)
 qqPlot(sqrt(dat5$Mean_cfs)); shapiro.test(sqrt(dat5$Mean_cfs))
 
-#Predictor Var - San Acacia Diversion ####
-dat6 <- read_csv("Data/Processed/SanAcaciaDiv.csv")
+#Predictor Var - San Acacia Gage ####
+ 
+#get data and format to get year and day for plotting
+dat15 <- read_csv("Data/Processed/RioGrandeGages2003_2018.csv") %>% 
+  mutate(Yr = lubridate::year(Date)) %>% 
+  mutate(Dy = lubridate::yday(Date))
 
-ggplot(dat6, aes(x=Date, y=Mean_daily_discharge_cfs))+
+#plotting
+  #plot to see annual distribution 
+  ggplot(dat15, aes(x=Date, y=Mean_cfs_SanAcacia))+
   geom_point()
 
-qqPlot(dat6$Mean_daily_discharge_cfs); shapiro.test(dat6$Mean_daily_discharge_cfs)
-qqPlot(log10(dat6$Mean_daily_discharge_cfs+1)); shapiro.test(log10(dat6$Mean_daily_discharge_cfs+1)) 
-qqPlot((dat6$Mean_daily_discharge_cfs)^2); shapiro.test((dat6$Mean_daily_discharge_cfs)^2)
-qqPlot(sqrt(dat6$Mean_daily_discharge_cfs)); shapiro.test(sqrt(dat6$Mean_daily_discharge_cfs))
+  #plot data by year to visualize annual distribution
+  ggplot(dat15, aes(Mean_cfs_SanAcacia))+
+    geom_histogram()+
+    facet_wrap(~Yr)
+  #log10 transformed to visualize normality BETTER
+  ggplot(dat15, aes(log10(Mean_cfs_SanAcacia)+1))+
+    geom_histogram()+
+    facet_wrap(~Yr)
+  #square transformed to visualize normality NOT GOOD
+  ggplot(dat15, aes((Mean_cfs_SanAcacia)^2))+
+    geom_histogram()+
+    facet_wrap(~Yr)
+  #square root transformed to visualize normality NOT AS GOOD AS LOG10
+  ggplot(dat15, aes(sqrt(Mean_cfs_SanAcacia)))+
+    geom_histogram()+
+    facet_wrap(~Yr)
+  
+#test for normality with transformations
+dat15_short <- dat15 %>% 
+  sample_n(5000)
+
+  qqPlot(dat15$Mean_cfs_SanAcacia); shapiro.test(dat15_short$Mean_cfs_SanAcacia) #W=0.7 p<0.5
+  qqPlot(log10(dat15$Mean_cfs_SanAcacia+1)); shapiro.test(log10(dat15_short$Mean_cfs_SanAcacia+1)) #W=0.9 p<0.5
+  qqPlot((dat15$Mean_cfs_SanAcacia)^2); shapiro.test((dat15_short$Mean_cfs_SanAcacia)^2) #W=0.4 p<0.5
+  qqPlot(sqrt(dat15$Mean_cfs_SanAcacia)); shapiro.test(sqrt(dat15_short$Mean_cfs_SanAcacia)) #W=0.9 p<0.5
+
+#Predictor Var - San Acacia Diversion ####
+dat <- read_csv("Data/Processed/Diversion_discharges.csv")
+
+ #get San Acacia data and format to get year and day for plotting
+dat6 <- dat %>% 
+  select(Date, SanAcacia_mean_daily_div_cfs) %>% 
+  mutate(Yr = lubridate::year(Date)) %>% 
+  mutate(Dy = lubridate::yday(Date))
+
+ #plot all dates
+ggplot(dat6, aes(x=Date, y=SanAcacia_mean_daily_div_cfs))+
+  geom_point()
+
+ #plot data by year to visualize annual distribution
+ggplot(dat6, aes(SanAcacia_mean_daily_div_cfs))+
+  geom_histogram()+
+  facet_wrap(~Yr)
+       #log10 transformed to visualize normality BETTER
+ggplot(dat6, aes(log10(SanAcacia_mean_daily_div_cfs)+1))+
+  geom_histogram()+
+  facet_wrap(~Yr)
+      #square transformed to visualize normality NOT GOOD
+ggplot(dat6, aes((SanAcacia_mean_daily_div_cfs)^2))+
+  geom_histogram()+
+  facet_wrap(~Yr)
+      #square root transformed to visualize normality SIMILAR TO LOG10
+ggplot(dat6, aes(sqrt(SanAcacia_mean_daily_div_cfs)))+
+  geom_histogram()+
+  facet_wrap(~Yr)
+
+ #test for normality with transformations
+qqPlot(dat6$SanAcacia_mean_daily_div_cfs); shapiro.test(dat6$SanAcacia_mean_daily_div_cfs) #W=0.7 p<0.5
+qqPlot(log10(dat6$SanAcacia_mean_daily_div_cfs+1)); shapiro.test(log10(dat6$SanAcacia_mean_daily_div_cfs+1)) #W=0.9 p<0.5
+qqPlot((dat6$SanAcacia_mean_daily_div_cfs)^2); shapiro.test((dat6$SanAcacia_mean_daily_div_cfs)^2) #W=0.3 p<0.5
+qqPlot(sqrt(dat6$SanAcacia_mean_daily_div_cfs)); shapiro.test(sqrt(dat6$SanAcacia_mean_daily_div_cfs)) #W=0.9 p<0.5
 
 #Predictor Var - Isleta Diversion ####
 dat7 <- read_csv("Data/Processed/IsletaDiv.csv")
