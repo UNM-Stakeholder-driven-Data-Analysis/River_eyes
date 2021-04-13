@@ -4,6 +4,7 @@
 #Libraries ####
 
 library(tidyverse)
+library(cowplot)
 library(car) #qq plot fxn
 library(lubridate) #dates
 library(psych) #correlation
@@ -51,7 +52,7 @@ boxplot(dat$DistanceDry~dat$Year, main="Boxplot", xlab = "Year",
 dat <- dat %>% 
   mutate(DistanceDryL=log(DistanceDry+1))  
 
-ggplot(dat, aes(DistanceDryL))+
+ggplot(dat, aes(DistanceDry))+
   geom_histogram()+
   facet_grid(~Reach, scale="free") +
   xlab("Log distance river dry (total miles)")
@@ -82,17 +83,26 @@ ggplot(data=dat, aes(x=Day, y=DistanceDry))+
   facet_wrap(~Year, scales="free_y")+
   theme_bw()
 
-ggplot(data=dat, aes(x=Day, y=DistanceDry))+
+pl1 <- ggplot(data=dat, aes(x=Day, y=DistanceDry))+
   geom_point()+
   facet_wrap(~Reach, scales="free_y")+
-  theme_bw()
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.border = element_blank(),
+        axis.line = element_line(color="black", size=1), panel.background = element_blank(), 
+        text=element_text(family = "Times New Roman", size =12),
+        legend.text = element_text(size=12),
+        legend.position = c(1,1), legend.justification = c(1,1), strip.background = element_blank())
 
-ggplot(data=dat, aes(x=Date, y=DistanceDry))+
+pl2 <- ggplot(data=dat, aes(x=Date, y=DistanceDry))+
   geom_point()+
   facet_wrap(~Reach, scales="free_y")+
-  theme_bw()
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.border = element_blank(),
+        axis.line = element_line(color="black", size=1), panel.background = element_blank(), 
+        text=element_text(family = "Times New Roman", size =12),
+        legend.text = element_text(size=12),
+        legend.position = c(1,1), legend.justification = c(1,1), strip.background = element_blank())+
+  ylab("")
 
-
+plot_grid(pl1, pl2)
 #Determine distribution
 dat_r_R5 <- dat %>% 
   filter(Reach == 5) %>% 
@@ -252,8 +262,7 @@ hist(dat1$Sum_days_rm_dry, xlab = "Number of days a given river mile was dry", m
 
 dat1 %>% 
   group_by(Year) %>% 
-  summarise(DistMn = mean(Sum_days_rm_dry)) %>% 
-  view()
+  summarise(DistMn = mean(Sum_days_rm_dry))
 
 #Plot data Annual Dry river mile
 plot(dat1$Sum_days_rm_dry~dat1$RM, xlab="River Mile", ylab="Number of days dry")
@@ -262,8 +271,13 @@ plot(dat1$Sum_days_rm_dry~dat1$RM, xlab="River Mile", ylab="Number of days dry")
 # plot
 ggplot(data=dat1, aes(x=RM, y=Sum_days_rm_dry))+
   geom_point()+
+  geom_line()+
+  facet_wrap(~Year, scale="free")+
   ylab("Number of days dry")+
-  xlab("River Mile")
+  xlab("River Mile")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.border = element_blank(),
+                          axis.line = element_line(color="black", size=1), panel.background = element_blank(), text=element_text(size =12),
+        strip.background = element_blank())
 
 #normality
 qqPlot(dat1$Sum_days_rm_dry); shapiro.test(dat1$Sum_days_rm_dry)
@@ -309,7 +323,7 @@ temp <- as.data.frame(with(dat2, table(RM, Condition.b)))
 
 ggplot(data = temp, aes(x=RM, y=Freq, color=Condition.b))+
   geom_point()+
-  scale_color_manual(values=c("blue", "red"),
+  scale_color_manual(values=c("grey", "black"),
                        name="Condition", labels=(c("Wet", "Dry")))+
   scale_x_discrete(breaks = seq(40,180,10))+
   labs(x="River mile", y="Number of days (2003-2018)")+
@@ -382,41 +396,53 @@ forecast::Pacf(dat20_ts, lag.max = 365, na.action = na.contiguous)
 
 #Predictor Var - ET Toolbox Reach 6-8####
 dat3 <- read_csv("Data/Processed/Predictors_mn_sum.csv")
+dat4 <- read_csv("Data/Processed/ET_Toolbox_R_6_8.csv")
 
-ggplot(dat3, aes(x=Date, y=Ag_DCU_cfs_5))+
+ET_pl1 <-ggplot(dat4, aes(x=Date, y=Ag_DCU_cfs))+
   geom_point()+
+  facet_wrap(~Reach)+
   ggtitle("Rio Grande reaches - Agriculture")+
-  ylab("Depletion (cfs)")
+  ylab("Evapotranspiration (cfs)")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.border = element_blank(),
+        axis.line = element_line(color="black", size=1), panel.background = element_blank(), 
+        text=element_text(family = "Times New Roman", size =12),
+        legend.text = element_text(size=12),
+        legend.position = c(1,1), legend.justification = c(1,1), strip.background = element_blank())
 
-ggplot(dat3, aes(x=Date, y=Riparian_DCU_cfs))+
+ET_pl2 <- ggplot(dat4, aes(x=Date, y=Riparian_DCU_cfs))+
   geom_point()+
   facet_wrap(~Reach)+
   ggtitle("Rio Grande reaches - Riparian")+
-  ylab("Depletion (cfs)")
+  ylab("Evapotranspiration (cfs)")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.border = element_blank(),
+        axis.line = element_line(color="black", size=1), panel.background = element_blank(), 
+        text=element_text(family = "Times New Roman", size =12),
+        legend.text = element_text(size=12),
+        legend.position = c(1,1), legend.justification = c(1,1), strip.background = element_blank())
 
-ggplot(dat3, aes(x=Date, y=OpenWater_DCU_cfs))+
+ET_pl3 <-ggplot(dat4, aes(x=Date, y=OpenWater_DCU_cfs))+
   geom_point()+
   facet_wrap(~Reach)+
   ggtitle("Rio Grande - Open water")+
-  ylab("Depletion (cfs)")
+  ylab("Evaporation (cfs)")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.border = element_blank(),
+        axis.line = element_line(color="black", size=1), panel.background = element_blank(), 
+        text=element_text(family = "Times New Roman", size =12),
+        legend.text = element_text(size=12),
+        legend.position = c(1,1), legend.justification = c(1,1), strip.background = element_blank())
 
-ggplot(dat3, aes(x=Date, y=Urban_DCU_cfs))+
-  geom_point()+
-  facet_wrap(~Reach)+
-  ggtitle("Rio Grande reaches - Urban")+
-  ylab("Depletion (cfs)")
-
-ggplot(dat3, aes(x=Date, y=Rain_cfs))+
+ET_pl4 <- ggplot(dat4, aes(x=Date, y=Rain_cfs))+
   geom_point()+
   facet_wrap(~Reach)+
   ggtitle("Rio Grande reaches - Rainfall")+
-  ylab("Addition (cfs)")
+  ylab("Addition (cfs)")+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.border = element_blank(),
+        axis.line = element_line(color="black", size=1), panel.background = element_blank(), 
+        text=element_text(family = "Times New Roman", size =12),
+        legend.text = element_text(size=12),
+        legend.position = c(1,1), legend.justification = c(1,1), strip.background = element_blank())
 
-ggplot(dat3, aes(x=Date, y=five_day_avg_URGWOM_cfs))+
-  geom_point()+
-  facet_wrap(~Reach)+
-  ggtitle("Rio Grande reaches - 5 day avg Upper Rio Grande Water Operations Model ")+
-  ylab("depletions (cfs)")
+plot_grid(ET_pl1, ET_pl2, ET_pl3, ET_pl4)
 
 #Filter to Reaches and 5000 sample for normality testing
 dat3_r_R5 <- dat3 %>% 
