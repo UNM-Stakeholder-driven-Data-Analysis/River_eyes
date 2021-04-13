@@ -2442,12 +2442,16 @@ R5_d2_correc <- R5_d2 %>%
 
 ggplot(R5, aes(Date, Ag_DCU_cfs, col = "black")) + 
   geom_point(size = 1) +
-  geom_point(data = R5_d2_correc, aes(Date, Ag_5_cor, col="red"))+
-  scale_color_manual(values=c("black", "red"),
-    name="Rio Grande \nET toolbox reach 5", labels=(c("uncorrected", "2003-2010 \n mean corrected")))+
+  geom_point(data = R5_d2_correc, aes(Date, Ag_5_cor, col="grey"))+
+  scale_color_manual(values=c("black", "grey"),
+    name="Rio Grande \nET toolbox reach 5", labels=(c("uncorrected", "2003-2010 mean corrected")))+
   ylab ("Agriculuture depletion (cfs)")+
   scale_x_date(date_breaks = "year", date_labels = "%Y")+
-  theme(axis.text.x=element_text(angle = 90))
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.border = element_blank(),
+      axis.line = element_line(color="black", size=1), panel.background = element_blank(), 
+      text=element_text(family = "Times New Roman", size =12),
+      legend.text = element_text(size=12),
+      legend.position = c(1,1), legend.justification = c(1,1), axis.text.x=element_text(angle = 90))
 
 R6 <- read_csv("Data/Processed/ET_data_R6.csv")
 R7 <- read_csv("Data/Processed/ET_data_R7.csv")
