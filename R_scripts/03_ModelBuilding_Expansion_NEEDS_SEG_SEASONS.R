@@ -10,16 +10,15 @@ library(lubridate)
 library(forecast)
 library(zoo)
 library(xts)
-library(WaveletComp)
 library(nlme)
 library(MARSS)
 library(beepr)
 library(visreg)
-library(psych)
+
 
 #Load data and combine response and predictors ####
     #summed the extent dry by reach for each day
-resp_contemp <- read.csv("Data/Processed/DailyExtentDry.csv") %>% 
+resp_contemp <- read.csv("Data/Processed/DailyExpansionDry.csv") %>% 
   group_by(Date) %>% 
   summarise(across(DistanceDry, sum)) %>% 
   mutate(Date = as.Date(Date)) %>% 
@@ -51,13 +50,14 @@ sum(is.na(dat_contemp$SanA_div))/nrow(dat_contemp)*100
 varz <- c("Isleta_div", "SanA_div", "SanA_gage", "Ag_mn", "Rip_mn", "OW_mn", "Rain_mn")
 
   #fill gaps with spline interpolation with max gap of 5 days
+options(scipen=999)
 list_filled = list()
 for(v in varz){
   result_nested <- list()
   tryCatch({
       temp = dat_contemp %>% select(Date, all_of(v))
       ts.temp<-read.zoo(temp, index.column=1, format="%Y-%m-%d")                # Make univariate zoo time series #
-      splineinterp = na.spline(ts.temp, na.rm = T, maxgap = 3)                  # Apply NA interpolation method with a possible gap of 3 days
+      splineinterp = na.spline(ts.temp, na.rm = T, maxgap = 30)                  # Apply NA interpolation method with a possible gap of 3 days
       splineinterp_df = as.data.frame(splineinterp)                             # revert back to df
       splineinterp_df$date_timeAK = as.Date(row.names(splineinterp_df))
       names(splineinterp_df) = c(paste(colnames(temp)[2],"filled",sep="_"),
@@ -75,7 +75,10 @@ dat_filled <-  plyr::join_all(list_filled,
    # join filled data to unfilled data
 dat_filled <-  left_join(dat_contemp, dat_filled, by = c("Date"))         #has value in scientific notation for Isleta diversion
 dat_filled <- dat_filled %>% 
-  mutate(Isleta_div_filled = if_else(Isleta_div_filled < 0, 0, Isleta_div_filled))
+  mutate(Isleta_div_filled = if_else(Isleta_div_filled < 0, 0, Isleta_div_filled)) %>% 
+  mutate(OW_mn_filled = if_else(OW_mn_filled < 0, 0, OW_mn_filled)) %>% 
+  mutate(Rip_mn_filled = if_else(Rip_mn_filled < 0, 0, Rip_mn_filled)) %>% 
+  mutate(Rain_mn_filled = if_else(Rain_mn_filled < 0, 0, Rain_mn_filled))
 
 #count number of NAs in predictors - Isleta from 584 to 357 (14%), SanA_div 672 to 634 (25%), filled only NA in SanA_gage and none for ET toolbox
 sum(is.na(dat_filled$Isleta_div_filled)); sum(is.na(dat_filled$SanA_div_filled)); sum(is.na(dat_filled$SanA_gage_filled))
@@ -130,10 +133,28 @@ ggplot() +
             aes(x=Date, y=Rain_mn), color="red")
  
 #nlme regression ####
-dat_filled %>% arrange(Date)
 
 # figure out the most contiguous time steps 
-summary(dat_filled %>% na.contiguous(Isleta_div) %>% select(Date))
+summary(dat_filled %>% select(Date, Isleta_div_filled) %>% na.contiguous() %>% select(Date)) #from Alex
+
+#corCAR1 for contiguous NAs 
+
+
+dat_filled2 <- dat_filled %>% select(Date, Isleta_div_filled:Rain_mn_filled)
+
+summary(dat_filled2 %>% na.contiguous(Isleta_div_filled) %>% select(Date))
 summary(dat_filled %>% na.contiguous(SanA_div_filled) %>% select(Date))
 summary(dat_filled %>% na.contiguous(SanA_gage_filled) %>% select(Date))
 summary(dat_filled %>% na.contiguous(Ag_mn_filled) %>% select(Date)) #this would be the same for all ET toolbox
+
+test2 <- dat_filled %>% 
+  select(Date:Year, Isleta_div_filled:Rain_mn_filled)
+summary(test2 %>% na.contiguous(Rain_mn_filled) %>% select(Date))
+
+test <- read.csv("Data/Book1.csv")
+test$Date <- as.Date(test$Date)
+summary(test %>% na.contiguous(V1) %>% select(Date)) #doesn't work, gives 2nd longest
+summary(test %>% na.contiguous(V2) %>% select(Date)) #doesn't work, gives same as V1
+
+test %>% 
+  na.contiguous() #it is returning the same as above and is what they share in common

@@ -12,7 +12,7 @@ library(emmeans)
 library(DHARMa)
 
 #Load data and combine response and predictors ####
-response <- read.csv("Data/Processed/DailyDryRM.csv")
+response <- read.csv("Data/Processed/DailyOccurrenceDryRM.csv")
 predictors <- read.csv("Data/Processed/Predictors_mn_sum.csv")
 
 dat <- response %>% 

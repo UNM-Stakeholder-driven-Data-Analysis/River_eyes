@@ -9,80 +9,20 @@ library(car) #qq plot fxn
 library(lubridate) #dates
 library(psych) #correlation
 library(janitor) #duplication
-
-library(tsibble) # useful for creating time series objects
 library(forecast) # for autotemporal Acf fxn
+library(tsibble)
 
-library(lme4) # for creating mixed models
-library(car) # for Anova(), vif()
-library(MuMIn) # for AICc
-library(emmeans) # for emmeans, emtrends, all the post hoc tests and plotting
-
-#Response Var - Daily Extent Dry ####
+#Response Var - Daily Expansion of Dry river miles ####
 #use read_csv for date format to be automatic but this makes it a tibble
-dat <- read_csv("Data/Processed/DailyExtentDry.csv")
+dat <- read_csv("Data/Processed/DailyExpansionDry.csv")
 
 # add day of year for plotting
 dat$Day <-  lubridate::yday(dat$Date)
 dat <- dat %>% 
   select(Date, DistanceDry,Year, Reach, Day) %>% 
   mutate(Reach = as.factor(as.character(Reach)))
-str(dat)
 
-#Summary explore Daily Extent Dry
-summary(dat)
-summary(dat$Year:dat$DistanceDry)
-dat %>% 
-  group_by(Year, Reach) %>% 
-  summarise(DistMn = mean(DistanceDry), n = length(DistanceDry)) %>% 
-  view()
-
-#Plot data Daily Extent Dry
-plot(dat$DistanceDry~dat$Date)
-
-hist(dat$DistanceDry, main="Histogram", 
-     xlab="Dry river (total miles)") #zero inflated
-
-hist(log(dat$DistanceDry+1), main = "Histogram log(DistanceDry)",
-     xlab="Distance of river drying events (total river miles)")
-
-boxplot(dat$DistanceDry~dat$Year, main="Boxplot", xlab = "Year",
-        ylab="Distance of river drying events (total river miles)")
-
-dat <- dat %>% 
-  mutate(DistanceDryL=log(DistanceDry+1))  
-
-ggplot(dat, aes(DistanceDry))+
-  geom_histogram()+
-  facet_grid(~Reach, scale="free") +
-  xlab("Log distance river dry (total miles)")
-
-ggplot(dat, aes(DistanceDry))+
-  geom_histogram()+
-  facet_wrap(~Year, scale="free") +
-  ggtitle("Histograms by Year")+
-  xlab("Distance of river drying events (total river miles)")
-
-dat %>% 
-  filter(DistanceDry > 0) %>% 
-  ggplot(aes(DistanceDry))+
-  geom_histogram()+
-  ggtitle("Histograms by Year Zeros Removed")+
-  xlab("Distance of river drying events (total river miles)")
-
-dat %>% 
-  filter(DistanceDry > 0) %>% 
-  ggplot(aes(DistanceDry))+
-  geom_histogram()+
-  facet_wrap(~Year, scale="free")+
-  ggtitle("Histograms by Year Zeros Removed")+
-  xlab("Distance of river drying events (total river miles)")
-
-ggplot(data=dat, aes(x=Day, y=DistanceDry))+
-  geom_point()+
-  facet_wrap(~Year, scales="free_y")+
-  theme_bw()
-
+#Plot data Daily Expansion of Dry river miles
 pl1 <- ggplot(data=dat, aes(x=Day, y=DistanceDry))+
   geom_point()+
   facet_wrap(~Reach, scales="free_y")+
@@ -102,46 +42,13 @@ pl2 <- ggplot(data=dat, aes(x=Date, y=DistanceDry))+
         legend.position = c(1,1), legend.justification = c(1,1), strip.background = element_blank())+
   ylab("")
 
-plot_grid(pl1, pl2)
-#Determine distribution
-dat_r_R5 <- dat %>% 
-  filter(Reach == 5) %>% 
-  sample_n(5000) %>% 
-  group_by(Day)
-qqPlot(dat_r_R5$DistanceDry); shapiro.test(dat_r_R5$DistanceDry) 
-qqPlot(log10(dat_r_R5$DistanceDry+1)); shapiro.test(log10(dat_r_R5$DistanceDry+1)) 
-qqPlot((dat_r_R5$DistanceDry)^2); shapiro.test((dat_r_R5$DistanceDry)^2)
-qqPlot(sqrt(dat_r_R5$DistanceDry)); shapiro.test((dat_r_R5$DistanceDry))
+#combine plots into one figure and save to file
+ExtentDryPlots <- plot_grid(pl1, pl2)
+ggsave2("Figures/Fig3_ExtentOfDrying.png", ExtentDryPlots) #saving to pdf did not fully work
 
-
-dat_r_R6 <- dat %>% 
-  filter(Reach == 6) %>% 
-  sample_n(5000) 
-qqPlot(dat_r_R6$DistanceDry); shapiro.test(dat_r_R6$DistanceDry) 
-qqPlot(log10(dat_r_R6$DistanceDry+1)); shapiro.test(log10(dat_r_R6$DistanceDry+1))
-qqPlot((dat_r_R6$DistanceDry)^2); shapiro.test((dat_r_R6$DistanceDry)^2)
-qqPlot(sqrt(dat_r_R6$DistanceDry)); shapiro.test((dat_r_R6$DistanceDry))
-
-dat_r_R7 <- dat %>% 
-  filter(Reach == 7) %>% 
-  sample_n(5000) 
-qqPlot(dat_r_R7$DistanceDry); shapiro.test(dat_r_R7$DistanceDry) 
-qqPlot(log10(dat_r_R7$DistanceDry+1)); shapiro.test(log10(dat_r_R7$DistanceDry+1)) 
-qqPlot((dat_r_R7$DistanceDry)^2); shapiro.test((dat_r_R7$DistanceDry)^2)
-qqPlot(sqrt(dat_r_R7$DistanceDry)); shapiro.test((dat_r_R7$DistanceDry))
-
-dat_r_R8 <- dat %>% 
-  filter(Reach == 8) %>% 
-  sample_n(5000) 
-qqPlot(dat_r_R8$DistanceDry); shapiro.test(dat_r_R8$DistanceDry) 
-qqPlot(log10(dat_r_R8$DistanceDry+1)); shapiro.test(log10(dat_r_R8$DistanceDry+1)) 
-qqPlot((dat_r_R8$DistanceDry)^2); shapiro.test((dat_r_R8$DistanceDry)^2)
-qqPlot(sqrt(dat_r_R8$DistanceDry)); shapiro.test((dat_r_R8$DistanceDry))
-
-
-#Response Var - Daily Extent Dry Temporal Auotcorrelation Reaches 5 & 7 ####
+#Response Var - Daily Expansion of Dry River miles Temporal Auotcorrelation Reaches 5 & 7 ####
 #Reach 5 
-dat10 <- read_csv("Data/Processed/DailyExtentDry.csv")
+dat10 <- read_csv("Data/Processed/DailyExpansionDry.csv")
 
 #organizing data to get a single date and distance dry
 #date duplication even when by reach
@@ -197,7 +104,7 @@ forecast::Acf(dat12_ts, lag.max = 12, na.action = na.contiguous)
 forecast::Pacf(dat12_ts, lag.max = 12, na.action = na.contiguous)
 
 #Reach 7 
-dat10 <- read_csv("Data/Processed/DailyExtentDry.csv")
+dat10 <- read_csv("Data/Processed/DailyExpansionDry.csv")
 
 #organizing data to get a single date and distance dry
 #date duplication even when by reach
@@ -251,10 +158,10 @@ plot(dat15_ts)
 forecast::Acf(dat15_ts, lag.max = 12, na.action = na.contiguous) 
 forecast::Pacf(dat15_ts, lag.max = 12, na.action = na.contiguous)
 
-#Response Var - Annual Dry River Mile ####
-dat1 <- read_csv("Data/Processed/AnnualDryRM.csv")
+#Response Var - Persistence of Dry River Mile over the year ####
+dat1 <- read_csv("Data/Processed/PersistenceDryRM.csv")
 
-#Summary explore Annual Dry river mile
+#Summary explore persistence Dry river mile
 summary(dat1)
 with(dat1, table(Sum_days_rm_dry, RM))
 
@@ -264,12 +171,12 @@ dat1 %>%
   group_by(Year) %>% 
   summarise(DistMn = mean(Sum_days_rm_dry))
 
-#Plot data Annual Dry river mile
+#Plot data persistence Dry river mile
 plot(dat1$Sum_days_rm_dry~dat1$RM, xlab="River Mile", ylab="Number of days dry")
 
 
 # plot
-ggplot(data=dat1, aes(x=RM, y=Sum_days_rm_dry))+
+RMDryPlot <- ggplot(data=dat1, aes(x=RM, y=Sum_days_rm_dry))+
   geom_point()+
   geom_line()+
   facet_wrap(~Year, scale="free")+
@@ -279,14 +186,17 @@ ggplot(data=dat1, aes(x=RM, y=Sum_days_rm_dry))+
                           axis.line = element_line(color="black", size=1), panel.background = element_blank(), text=element_text(size =12),
         strip.background = element_blank())
 
+#save to file
+ggsave("Figures/Fig2_AnnualDryingRM_Yr.pdf", RMDryPlot)
+
 #normality
 qqPlot(dat1$Sum_days_rm_dry); shapiro.test(dat1$Sum_days_rm_dry)
 qqPlot(log(dat1$Sum_days_rm_dry+1)); shapiro.test(log(dat1$Sum_days_rm_dry+1))
 qqPlot((dat1$Sum_days_rm_dry)^2); shapiro.test((dat1$Sum_days_rm_dry)^2)
 qqPlot(sqrt(dat1$Sum_days_rm_dry)); shapiro.test(sqrt(dat1$Sum_days_rm_dry))
 
-#Response Var - Annual Dry River Mile Temporal Auotcorrelation for RM 74####
-dat16 <- read_csv("Data/Processed/AnnualDryRM.csv")
+#Response Var - Persistence of Annual Dry River Mile Temporal Auotcorrelation for RM 74####
+dat16 <- read_csv("Data/Processed/PersistenceDryRM.csv")
 
 #looking at a river miles that had extensive drying each year 
 dat17 <- dat16 %>% 
@@ -313,15 +223,13 @@ plot(dat18_ts)
 forecast::Acf(dat18_ts, lag.max = 365, na.action = na.contiguous) 
 forecast::Pacf(dat18_ts, lag.max = 365, na.action = na.contiguous)
 
-#Response Var - Daily Dry RM ####
-dat2 <- read_csv("Data/Processed/DailyDryRM.csv")
+#Response Var - Occurrence of Dry RM each day ####
+dat2 <- read_csv("Data/Processed/DailyOccurrenceDryRM.csv")
 
-#summaries
-
-summary(dat2)
+#temporary data frame to plot river mile condition
 temp <- as.data.frame(with(dat2, table(RM, Condition.b)))
 
-ggplot(data = temp, aes(x=RM, y=Freq, color=Condition.b))+
+RiverMileCondition <-ggplot(data = temp, aes(x=RM, y=Freq, color=Condition.b))+
   geom_point()+
   scale_color_manual(values=c("grey", "black"),
                        name="Condition", labels=(c("Wet", "Dry")))+
@@ -330,48 +238,17 @@ ggplot(data = temp, aes(x=RM, y=Freq, color=Condition.b))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.border = element_blank(),
         axis.line = element_line(color="black", size=1), panel.background = element_blank(), text=element_text(size =18),
         legend.text = element_text(size=18))+
-  scale_y_continuous(labels = scales::comma)
+  scale_y_continuous(labels = scales::comma)+
+  annotate("segment", x=20, xend =20, y=2300, yend=200, colour="black", size=1, alpha=0.8, arrow=arrow())+
+  annotate("segment", x=98, xend =98, y=2300, yend=200, colour="black", size=1, alpha=0.8, arrow=arrow())+
+  annotate("segment", x=79, xend =79, y=2300, yend=200, colour="black", size=1, alpha=0.8, arrow=arrow())+
+  annotate("text", x = c(20,79,98), y = c(2700,2700, 2700), label = c("Low conveyance \npumping to river", "Subsurface \nreturn", "Peralta irrigation \nreturn"),
+           color="black", size=4 , angle=0)
+
+ggsave2("Figures/Fig1_RiverMileCondition.pdf", RiverMileCondition) 
   
-
-dat2 %>% 
-  filter(Reach==5) %>% 
-  ggplot(., aes(x=Date, y=Condition.b)) +
-  geom_point()+
-  facet_wrap(~RM)+
-  ggtitle("River miles in Reach 5")+
-  ylab("River dry (1) or wet (0)")+
-  scale_y_continuous(breaks = seq(0,1))
-
-
-dat2 %>% 
-  filter(Reach==6) %>% 
-  ggplot(., aes(x=Date, y=Condition.b)) +
-  geom_point()+
-  facet_wrap(~RM)+
-  ggtitle("River miles in Reach 6")+
-  ylab("River dry (1) or wet (0)")+
-  scale_y_continuous(breaks = seq(0,1))
-
-dat2 %>% 
-  filter(Reach==7) %>% 
-  ggplot(., aes(x=Date, y=Condition.b)) +
-  geom_point()+
-  facet_wrap(~RM)+
-  ggtitle("River miles in Reach 7")+
-  ylab("River dry (1) or wet (0)")+
-  scale_y_continuous(breaks = seq(0,1))
-
-dat2 %>% 
-  filter(Reach==8) %>% 
-  ggplot(., aes(x=Date, y=Condition.b)) +
-  geom_point()+
-  facet_wrap(~RM)+
-  ggtitle("River miles in Reach 8")+
-  ylab("River dry (1) or wet (0)")+
-  scale_y_continuous(breaks = seq(0,1))
-
-#Response Var - Daily Extent Dry Temporal Auotcorrelation for RM 74####
-dat19 <- read_csv("Data/Processed/DailyDryRM.csv")
+#Response Var - Daily Occurrence Dry Temporal Auotcorrelation for RM 74####
+dat19 <- read_csv("Data/Processed/DailyOccurrenceDryRM.csv")
 
 #looking at a river miles that had extensive drying each year 
 dat20 <- dat19 %>% 
@@ -444,148 +321,44 @@ ET_pl4 <- ggplot(dat4, aes(x=Date, y=Rain_cfs))+
 
 plot_grid(ET_pl1, ET_pl2, ET_pl3, ET_pl4)
 
-#Filter to Reaches and 5000 sample for normality testing
+#Filter to Reaches and 5000 sample for normality testing for the agriculture sector
 dat3_r_R5 <- dat3 %>% 
-  filter(Reach == 5) %>% 
+  select(Ag_DCU_cfs_5) %>% 
   sample_n(5000) 
 
-dat3_r_R8 <- dat3 %>% 
-  filter(Reach == 6) %>% 
-  sample_n(5000) 
-
-dat3_r_R8 <- dat3 %>% 
-  filter(Reach == 8) %>% 
+dat3_r_R6 <- dat3 %>% 
+  select(Ag_DCU_cfs_6) %>%  
   sample_n(5000) 
 
 dat3_r_R7 <- dat3 %>% 
-  filter(Reach == 7) %>% 
+  select(Ag_DCU_cfs_7) %>%  
+  sample_n(5000) 
+
+dat3_r_R8 <- dat3 %>% 
+  select(Ag_DCU_cfs_8) %>%  
   sample_n(5000) 
 
 #Determine distribution Ag depletion
-qqPlot(dat3_r_R5$Ag_DCU_cfs); shapiro.test(dat3_r_R5$Ag_DCU_cfs) 
-qqPlot(log10(dat3_r_R5$Ag_DCU_cfs+1)); shapiro.test(log10(dat3_r_R5$Ag_DCU_cfs+1)) 
-qqPlot((dat3_r_R5$Ag_DCU_cfs)^2); shapiro.test((dat3_r_R5$Ag_DCU_cfs)^2)
-qqPlot(sqrt(dat3_r_R5$Ag_DCU_cfs)); shapiro.test(sqrt(dat3_r_R5$Ag_DCU_cfs))
+qqPlot(dat3_r_R5$Ag_DCU_cfs_5); shapiro.test(dat3_r_R5$Ag_DCU_cfs_5) 
+qqPlot(log10(dat3_r_R5$Ag_DCU_cfs_5+1)); shapiro.test(log10(dat3_r_R5$Ag_DCU_cfs_5+1)) 
+qqPlot((dat3_r_R5$Ag_DCU_cfs_5)^2); shapiro.test((dat3_r_R5$Ag_DCU_cfs_5)^2)
+qqPlot(sqrt(dat3_r_R5$Ag_DCU_cfs_5)); shapiro.test(sqrt(dat3_r_R5$Ag_DCU_cfs_5))
 
-qqPlot(dat3_r_R8$Ag_DCU_cfs); shapiro.test(dat3_r_R8$Ag_DCU_cfs) 
-qqPlot(log10(dat3_r_R8$Ag_DCU_cfs+1)); shapiro.test(log10(dat3_r_R8$Ag_DCU_cfs+1)) 
-qqPlot((dat3_r_R8$Ag_DCU_cfs)^2); shapiro.test((dat3_r_R8$Ag_DCU_cfs)^2)
-qqPlot(sqrt(dat3_r_R8$Ag_DCU_cfs)); shapiro.test(sqrt(dat3_r_R8$Ag_DCU_cfs))
+qqPlot(dat3_r_R6$Ag_DCU_cfs_6); shapiro.test(dat3_r_R6$Ag_DCU_cfs_6) 
+qqPlot(log10(dat3_r_R6$Ag_DCU_cfs_6+1)); shapiro.test(log10(dat3_r_R6$Ag_DCU_cfs_6+1)) 
+qqPlot((dat3_r_R6$Ag_DCU_cfs_6)^2); shapiro.test((dat3_r_R6$Ag_DCU_cfs_6)^2)
+qqPlot(sqrt(dat3_r_R6$Ag_DCU_cfs_6)); shapiro.test(sqrt(dat3_r_R6$Ag_DCU_cfs_6))
 
-qqPlot(dat3_r_R8$Ag_DCU_cfs); shapiro.test(dat3_r_R8$Ag_DCU_cfs) 
-qqPlot(log10(dat3_r_R8$Ag_DCU_cfs+1)); shapiro.test(log10(dat3_r_R8$Ag_DCU_cfs+1)) 
-qqPlot((dat3_r_R7$Ag_DCU_cfs)^2); shapiro.test((dat3_r_R7$Ag_DCU_cfs)^2)
-qqPlot(sqrt(dat3_r_R7$Ag_DCU_cfs)); shapiro.test(sqrt(dat3_r_R7$Ag_DCU_cfs))
+qqPlot(dat3_r_R7$Ag_DCU_cfs_7); shapiro.test(dat3_r_R7$Ag_DCU_cfs_7) 
+qqPlot(log10(dat3_r_R7$Ag_DCU_cfs_7+1)); shapiro.test(log10(dat3_r_R7$Ag_DCU_cfs_7+1)) 
+qqPlot((dat3_r_R7$Ag_DCU_cfs_7)^2); shapiro.test((dat3_r_R7$Ag_DCU_cfs_7)^2)
+qqPlot(sqrt(dat3_r_R7$Ag_DCU_cfs_7)); shapiro.test(sqrt(dat3_r_R7$Ag_DCU_cfs_7))
 
-qqPlot(dat3_r_R7$Ag_DCU_cfs); shapiro.test(dat3_r_R7$Ag_DCU_cfs) 
-qqPlot(log10(dat3_r_R7$Ag_DCU_cfs+1)); shapiro.test(log10(dat3_r_R7$Ag_DCU_cfs+1)) 
-qqPlot((dat3_r_R8$Ag_DCU_cfs)^2); shapiro.test((dat3_r_R8$Ag_DCU_cfs)^2)
-qqPlot(sqrt(dat3_r_R8$Ag_DCU_cfs)); shapiro.test(sqrt(dat3_r_R8$Ag_DCU_cfs))
+qqPlot(dat3_r_R8$Ag_DCU_cfs_8); shapiro.test(dat3_r_R8$Ag_DCU_cfs_8) 
+qqPlot(log10(dat3_r_R8$Ag_DCU_cfs_8+1)); shapiro.test(log10(dat3_r_R8$Ag_DCU_cfs_8+1)) 
+qqPlot((dat3_r_R8$Ag_DCU_cfs_8)^2); shapiro.test((dat3_r_R8$Ag_DCU_cfs_8)^2)
+qqPlot(sqrt(dat3_r_R8$Ag_DCU_cfs_8)); shapiro.test(sqrt(dat3_r_R8$Ag_DCU_cfs_8))
 
-#Determine distribution Riparian depletion
-qqPlot(dat3_r_R5$Riparian_DCU_cfs); shapiro.test(dat3_r_R5$Riparian_DCU_cfs) 
-qqPlot(log10(dat3_r_R5$Riparian_DCU_cfs+1)); shapiro.test(log10(dat3_r_R5$Riparian_DCU_cfs+1)) 
-qqPlot((dat3_r_R5$Riparian_DCU_cfs)^2); shapiro.test((dat3_r_R5$Riparian_DCU_cfs)^2)
-qqPlot(sqrt(dat3_r_R5$Riparian_DCU_cfs)); shapiro.test(sqrt(dat3_r_R5$Riparian_DCU_cfs))
-
-qqPlot(dat3_r_R8$Riparian_DCU_cfs); shapiro.test(dat3_r_R8$Riparian_DCU_cfs) 
-qqPlot(log10(dat3_r_R8$Riparian_DCU_cfs+1)); shapiro.test(log10(dat3_r_R8$Riparian_DCU_cfs+1)) 
-qqPlot((dat3_r_R8$Riparian_DCU_cfs)^2); shapiro.test((dat3_r_R8$Riparian_DCU_cfs)^2)
-qqPlot(sqrt(dat3_r_R8$Riparian_DCU_cfs)); shapiro.test(sqrt(dat3_r_R8$Riparian_DCU_cfs))
-
-qqPlot(dat3_r_R7$Riparian_DCU_cfs); shapiro.test(dat3_r_R7$Riparian_DCU_cfs) 
-qqPlot(log10(dat3_r_R7$Riparian_DCU_cfs+1)); shapiro.test(log10(dat3_r_R7$Riparian_DCU_cfs+1)) 
-qqPlot((dat3_r_R7$Riparian_DCU_cfs)^2); shapiro.test((dat3_r_R7$Riparian_DCU_cfs)^2)
-qqPlot(sqrt(dat3_r_R7$Riparian_DCU_cfs)); shapiro.test(sqrt(dat3_r_R7$Riparian_DCU_cfs))
-
-qqPlot(dat3_r_R8$Riparian_DCU_cfs); shapiro.test(dat3_r_R8$Riparian_DCU_cfs) 
-qqPlot(log10(dat3_r_R8$Riparian_DCU_cfs+1)); shapiro.test(log10(dat3_r_R8$Riparian_DCU_cfs+1)) 
-qqPlot((dat3_r_R8$Riparian_DCU_cfs)^2); shapiro.test((dat3_r_R8$Riparian_DCU_cfs)^2)
-qqPlot(sqrt(dat3_r_R8$Riparian_DCU_cfs)); shapiro.test(sqrt(dat3_r_R8$Riparian_DCU_cfs))
-
-#Determine distribution OpenWater depletion - Wasn't so bad some reaches close to normal
-qqPlot(dat3_r_R5$OpenWater_DCU_cfs); shapiro.test(dat3_r_R5$OpenWater_DCU_cfs) 
-qqPlot(log10(dat3_r_R5$OpenWater_DCU_cfs+1)); shapiro.test(log10(dat3_r_R5$OpenWater_DCU_cfs+1)) 
-qqPlot((dat3_r_R5$OpenWater_DCU_cfs)^2); shapiro.test((dat3_r_R5$OpenWater_DCU_cfs)^2)
-qqPlot(sqrt(dat3_r_R5$OpenWater_DCU_cfs)); shapiro.test(sqrt(dat3_r_R5$OpenWater_DCU_cfs))
-
-qqPlot(dat3_r_R8$OpenWater_DCU_cfs); shapiro.test(dat3_r_R8$OpenWater_DCU_cfs) 
-qqPlot(log10(dat3_r_R8$OpenWater_DCU_cfs+1)); shapiro.test(log10(dat3_r_R8$OpenWater_DCU_cfs+1))
-qqPlot((dat3_r_R8$OpenWater_DCU_cfs)^2); shapiro.test((dat3_r_R8$OpenWater_DCU_cfs)^2)
-qqPlot(sqrt(dat3_r_R8$OpenWater_DCU_cfs)); shapiro.test(sqrt(dat3_r_R8$OpenWater_DCU_cfs))
-
-qqPlot(dat3_r_R7$OpenWater_DCU_cfs); shapiro.test(dat3_r_R7$OpenWater_DCU_cfs) 
-qqPlot(log10(dat3_r_R7$OpenWater_DCU_cfs+1)); shapiro.test(log10(dat3_r_R7$OpenWater_DCU_cfs+1)) 
-qqPlot((dat3_r_R7$OpenWater_DCU_cfs)^2); shapiro.test((dat3_r_R7$OpenWater_DCU_cfs)^2)
-qqPlot(sqrt(dat3_r_R7$OpenWater_DCU_cfs)); shapiro.test(sqrt(dat3_r_R7$OpenWater_DCU_cfs))
-
-qqPlot(dat3_r_R8$OpenWater_DCU_cfs); shapiro.test(dat3_r_R8$OpenWater_DCU_cfs) 
-qqPlot(log10(dat3_r_R8$OpenWater_DCU_cfs+1)); shapiro.test(log10(dat3_r_R8$OpenWater_DCU_cfs+1)) 
-qqPlot((dat3_r_R8$OpenWater_DCU_cfs)^2); shapiro.test((dat3_r_R8$OpenWater_DCU_cfs)^2)
-qqPlot(sqrt(dat3_r_R8$OpenWater_DCU_cfs)); shapiro.test(sqrt(dat3_r_R8$OpenWater_DCU_cfs))
-
-#Determine distribution Urban depletion - 
-qqPlot(dat3_r_R5$Urban_DCU_cfs); shapiro.test(dat3_r_R5$Urban_DCU_cfs) 
-qqPlot(log10(dat3_r_R5$Urban_DCU_cfs+1)); shapiro.test(log10(dat3_r_R5$Urban_DCU_cfs+1)) 
-qqPlot((dat3_r_R5$Urban_DCU_cfs)^2); shapiro.test((dat3_r_R5$Urban_DCU_cfs)^2)
-qqPlot(sqrt(dat3_r_R5$Urban_DCU_cfs)); shapiro.test(sqrt(dat3_r_R5$Urban_DCU_cfs))
-
-qqPlot(dat3_r_R8$Urban_DCU_cfs); shapiro.test(dat3_r_R8$Urban_DCU_cfs) 
-qqPlot(log10(dat3_r_R8$Urban_DCU_cfs+1)); shapiro.test(log10(dat3_r_R8$Urban_DCU_cfs+1))
-qqPlot((dat3_r_R8$Urban_DCU_cfs)^2); shapiro.test((dat3_r_R8$Urban_DCU_cfs)^2)
-qqPlot(sqrt(dat3_r_R8$Urban_DCU_cfs)); shapiro.test(sqrt(dat3_r_R8$Urban_DCU_cfs))
-
-qqPlot(dat3_r_R7$Urban_DCU_cfs); shapiro.test(dat3_r_R7$Urban_DCU_cfs) 
-qqPlot(log10(dat3_r_R7$Urban_DCU_cfs+1)); shapiro.test(log10(dat3_r_R7$Urban_DCU_cfs+1)) 
-qqPlot((dat3_r_R7$Urban_DCU_cfs)^2); shapiro.test((dat3_r_R7$Urban_DCU_cfs)^2)
-qqPlot(sqrt(dat3_r_R7$Urban_DCU_cfs)); shapiro.test(sqrt(dat3_r_R7$Urban_DCU_cfs))
-
-qqPlot(dat3_r_R8$Urban_DCU_cfs); shapiro.test(dat3_r_R8$Urban_DCU_cfs) 
-qqPlot(log10(dat3_r_R8$Urban_DCU_cfs+1)); shapiro.test(log10(dat3_r_R8$Urban_DCU_cfs+1)) 
-qqPlot((dat3_r_R8$Urban_DCU_cfs)^2); shapiro.test((dat3_r_R8$Urban_DCU_cfs)^2)
-qqPlot(sqrt(dat3_r_R8$Urban_DCU_cfs)); shapiro.test(sqrt(dat3_r_R8$Urban_DCU_cfs))
-
-#Determine distribution Rainfall - 
-qqPlot(dat3_r_R5$Rain_cfs); shapiro.test(dat3_r_R5$Rain_cfs) 
-qqPlot(log10(dat3_r_R5$Rain_cfs+1)); shapiro.test(log10(dat3_r_R5$Rain_cfs+1)) 
-qqPlot((dat3_r_R5$Rain_cfs)^2); shapiro.test((dat3_r_R5$Rain_cfs)^2)
-qqPlot(sqrt(dat3_r_R5$Rain_cfs)); shapiro.test(sqrt(dat3_r_R5$Rain_cfs))
-
-qqPlot(dat3_r_R8$Rain_cfs); shapiro.test(dat3_r_R8$Rain_cfs) 
-qqPlot(log10(dat3_r_R8$Rain_cfs+1)); shapiro.test(log10(dat3_r_R8$Rain_cfs+1))
-qqPlot((dat3_r_R8$Rain_cfs)^2); shapiro.test((dat3_r_R8$Rain_cfs)^2)
-qqPlot(sqrt(dat3_r_R8$Rain_cfs)); shapiro.test(sqrt(dat3_r_R8$Rain_cfs))
-
-qqPlot(dat3_r_R7$Rain_cfs); shapiro.test(dat3_r_R7$Rain_cfs) 
-qqPlot(log10(dat3_r_R7$Rain_cfs+1)); shapiro.test(log10(dat3_r_R7$Rain_cfs+1)) 
-qqPlot((dat3_r_R7$Rain_cfs)^2); shapiro.test((dat3_r_R7$Rain_cfs)^2)
-qqPlot(sqrt(dat3_r_R7$Rain_cfs)); shapiro.test(sqrt(dat3_r_R7$Rain_cfs))
-
-qqPlot(dat3_r_R8$Rain_cfs); shapiro.test(dat3_r_R8$Rain_cfs) 
-qqPlot(log10(dat3_r_R8$Rain_cfs+1)); shapiro.test(log10(dat3_r_R8$Rain_cfs+1)) 
-qqPlot((dat3_r_R8$Rain_cfs)^2); shapiro.test((dat3_r_R8$Rain_cfs)^2)
-qqPlot(sqrt(dat3_r_R8$Rain_cfs)); shapiro.test(sqrt(dat3_r_R8$Rain_cfs))
-
-#Determine distribution - Avg total Upper Rio Grande Water Operations Model  - Some not horrible
-qqPlot(dat3_r_R5$five_day_avg_URGWOM_cfs); shapiro.test(dat3_r_R5$five_day_avg_URGWOM_cfs) 
-qqPlot(log10(dat3_r_R5$five_day_avg_URGWOM_cfs+1)); shapiro.test(log10(dat3_r_R5$five_day_avg_URGWOM_cfs+1)) 
-qqPlot((dat3_r_R5$five_day_avg_URGWOM_cfs)^2); shapiro.test((dat3_r_R5$five_day_avg_URGWOM_cfs)^2)
-qqPlot(sqrt(dat3_r_R5$five_day_avg_URGWOM_cfs)); shapiro.test(sqrt(dat3_r_R5$five_day_avg_URGWOM_cfs))
-
-qqPlot(dat3_r_R8$five_day_avg_URGWOM_cfs); shapiro.test(dat3_r_R8$five_day_avg_URGWOM_cfs) 
-qqPlot(log10(dat3_r_R8$five_day_avg_URGWOM_cfs+1)); shapiro.test(log10(dat3_r_R8$five_day_avg_URGWOM_cfs+1))
-qqPlot((dat3_r_R8$five_day_avg_URGWOM_cfs)^2); shapiro.test((dat3_r_R8$five_day_avg_URGWOM_cfs)^2)
-qqPlot(sqrt(dat3_r_R8$five_day_avg_URGWOM_cfs)); shapiro.test(sqrt(dat3_r_R8$five_day_avg_URGWOM_cfs))
-
-qqPlot(dat3_r_R7$five_day_avg_URGWOM_cfs); shapiro.test(dat3_r_R7$five_day_avg_URGWOM_cfs) 
-qqPlot(log10(dat3_r_R7$five_day_avg_URGWOM_cfs+1)); shapiro.test(log10(dat3_r_R7$five_day_avg_URGWOM_cfs+1)) 
-qqPlot((dat3_r_R7$five_day_avg_URGWOM_cfs)^2); shapiro.test((dat3_r_R7$five_day_avg_URGWOM_cfs)^2)
-qqPlot(sqrt(dat3_r_R7$five_day_avg_URGWOM_cfs)); shapiro.test(sqrt(dat3_r_R7$five_day_avg_URGWOM_cfs))
-
-qqPlot(dat3_r_R8$five_day_avg_URGWOM_cfs); shapiro.test(dat3_r_R8$five_day_avg_URGWOM_cfs) 
-qqPlot(log10(dat3_r_R8$five_day_avg_URGWOM_cfs+1)); shapiro.test(log10(dat3_r_R8$five_day_avg_URGWOM_cfs+1)) 
-qqPlot((dat3_r_R8$five_day_avg_URGWOM_cfs)^2); shapiro.test((dat3_r_R8$five_day_avg_URGWOM_cfs)^2)
-qqPlot(sqrt(dat3_r_R8$five_day_avg_URGWOM_cfs)); shapiro.test(sqrt(dat3_r_R8$five_day_avg_URGWOM_cfs))
 
 #Predictor Var - ET Toolbox Correlations ####
 
@@ -616,7 +389,7 @@ tab <-  round(as.data.frame(cor(cov(temp[,7:13], use="na.or.complete"))), 2)
 tab[abs(tab)<0.4] <-  "no_corr"
 View(tab)
 
-write.csv(tab, "Data/Processed/R8_toolbox_corr.csv")
+write.csv(tab, "Data/Processed/R6_toolbox_corr.csv")
 
 # reduce data down to one Reach7
 temp <-  dat3 %>% filter(Reach=="7") 
@@ -657,26 +430,27 @@ ggplot(dat4, aes(x=Year, y = Index_KAF))+
   ylab("Otowi index (KAF)")
 
 #normality
+par(mfrow=c(1,1))
 qqPlot(dat4$Index_KAF); shapiro.test(dat4$Index_KAF) 
 
-#Predictor Var - Bosque Gage ISSUESSSS!!!!! no bosque data :(####
+#Predictor Var - Bosque Farms Gage ####
 #load data
-dat5 <- read_csv("Data/Processed/Predictors.csv")
+dat5 <- read.csv("Data/Processed/Predictors.csv")
 
 #plot data
 ggplot(dat5, aes(x=Date, y=Mean_cfs_BosFarms))+
   geom_point()
 
 #normality
-qqPlot(dat5$Mean_cfs); shapiro.test(dat5$Mean_cfs) 
-qqPlot(log10(dat5$Mean_cfs+1)); shapiro.test(log10(dat5$Mean_cfs+1)) 
-qqPlot((dat5$Mean_cfs)^2); shapiro.test((dat5$Mean_cfs)^2)
-qqPlot(sqrt(dat5$Mean_cfs)); shapiro.test(sqrt(dat5$Mean_cfs))
+qqPlot(dat5$Mean_cfs_BosFarms); shapiro.test(dat5$Mean_cfs_BosFarms) 
+qqPlot(log10(dat5$Mean_cfs_BosFarms+1)); shapiro.test(log10(dat5$Mean_cfs_BosFarms+1)) 
+qqPlot((dat5$Mean_cfs_BosFarms)^2); shapiro.test((dat5$Mean_cfs_BosFarms)^2)
+qqPlot(sqrt(dat5$Mean_cfs_BosFarms)); shapiro.test(sqrt(dat5$Mean_cfs_BosFarms))
 
 #Predictor Var - San Acacia Gage ####
  
 #get data and format to get year and day for plotting
-dat15 <- read_csv("Data/Processed/RioGrandeGages2003_2018.csv") %>% 
+dat15 <- read.csv("Data/Processed/RioGrandeGages2003_2018.csv") %>% 
   mutate(Yr = lubridate::year(Date)) %>% 
   mutate(Dy = lubridate::yday(Date))
 
@@ -748,37 +522,28 @@ qqPlot((dat6$SanAcacia_mean_daily_div_cfs)^2); shapiro.test((dat6$SanAcacia_mean
 qqPlot(sqrt(dat6$SanAcacia_mean_daily_div_cfs)); shapiro.test(sqrt(dat6$SanAcacia_mean_daily_div_cfs)) #W=0.9 p<0.5
 
 #Predictor Var - Isleta Diversion ####
-dat7 <- read_csv("Data/Processed/IsletaDiv.csv")
+dat7 <- read_csv("Data/Processed/Diversion_discharges.csv")
 
-ggplot(dat7, aes(x=Date, y=Tot_diversion_cfs))+
+ggplot(dat7, aes(x=Date, y=Isleta_mean_daily_div_cfs))+
   geom_point()
 
-qqPlot(dat7$Tot_diversion_cfs); shapiro.test(dat7$Tot_diversion_cfs)
-qqPlot(log10(dat7$Tot_diversion_cfs+1)); shapiro.test(log10(dat7$Tot_diversion_cfs+1)) 
-qqPlot((dat7$Tot_diversion_cfs)^2); shapiro.test((dat7$Tot_diversion_cfs)^2)
-qqPlot(sqrt(dat7$Tot_diversion_cfs)); shapiro.test(sqrt(dat7$Tot_diversion_cfs))
+qqPlot(dat7$Isleta_mean_daily_div_cfs); shapiro.test(dat7$Isleta_mean_daily_div_cfs)
+qqPlot(log10(dat7$Isleta_mean_daily_div_cfs+1)); shapiro.test(log10(dat7$Isleta_mean_daily_div_cfs+1)) 
+qqPlot((dat7$Isleta_mean_daily_div_cfs)^2); shapiro.test((dat7$Isleta_mean_daily_div_cfs)^2)
+qqPlot(sqrt(dat7$Isleta_mean_daily_div_cfs)); shapiro.test(sqrt(dat7$Isleta_mean_daily_div_cfs))
 
-#Predictor Var - Diversion Correlations ####
-dat8 <- read_csv("Data/Processed/SanAcaciaDiv.csv")
-dat9 <- read_csv("Data/Processed/IsletaDiv.csv")
-
-dat8 <- dat8[-(4011),]
-dat8 <- dat8 %>% 
+#Predictor Var - Correlations ####
+dat8 <- dat7 %>% 
   mutate(Date = as.Date(Date)) %>% 
   complete(Date = seq.Date(min(Date), max(Date), by = "day"), 
            fill = list(value = NA)) %>% 
   filter(Date > "2003-06-25")
 
-Diversions <- cbind(dat8, dat9)
-Diversions <- Diversions %>% 
-  select(Mean_daily_discharge_cfs,Tot_diversion_cfs) %>% 
-  rename(SanAcaciaDiv = Mean_daily_discharge_cfs, IsletaDiv = Tot_diversion_cfs )
-
 # plot correlations (of data columns only)
-pairs.panels(Diversions[,1:2], scale=T)
-pairs.panels(Diversions[,1:2], scale=F)
+pairs.panels(dat8[,2:3], scale=T)
+pairs.panels(dat8[,2:3], scale=F)
 # make table of correlations (I am rounding and replacing low values with text so that it is easier to see results)
-tab <-  round(as.data.frame(cor(cov(Diversions[,1:2], use="na.or.complete"))), 2)
+tab <-  round(as.data.frame(cor(cov(dat8[,2:3], use="na.or.complete"))), 2)
 tab[abs(tab)<0.4] <-  "no_corr"
 View(tab)
 

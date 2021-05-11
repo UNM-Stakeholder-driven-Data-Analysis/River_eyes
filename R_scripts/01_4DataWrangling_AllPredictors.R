@@ -8,7 +8,7 @@ library(tidyverse)
 #load data sets #####
 
 #ET toolbox: Ag depletion, riparian ET, water evap, precip
-datToolbox <- read_csv("Data/Processed/ET_Toolbox_Corrected.csv")
+datToolbox <- read_csv("Data/Processed/ET_Toolbox_R_6_8.csv")
 
 temp <- data.frame(rep(NA, each=5844))
 colnames(temp)[1] <- "empty"
@@ -73,6 +73,7 @@ Predictors <- cbind(datDiversions, datGages, datToolboxR5, datToolboxR6, datTool
 #write to file #####
 write.csv(Predictors,"Data/Processed/Predictors.csv",row.names = FALSE)
 
+#Otowi index supply
 dat <- read.csv("Data/Raw/Otowi Index Supply.csv", header = FALSE)
 datOtowi <- dat[-(1),]
 datOtowi <- datOtowi %>% 
@@ -100,10 +101,3 @@ Predictors2 <- cbind(dat, dat_mn, dat_sm) %>%
   select(-c("Date2", "Date3", MeanPERCN:MeanCACCN))
 
 write.csv(Predictors2, "Data/Processed/Predictors_mn_sum.csv", row.names = FALSE)
-
-test <- read.csv("Data/Processed/Predictors_mn_sum.csv")
-
-ggplot(test, aes(x=Date, y=Ag_sum))+
-  geom_point()+
-  ggtitle("Rio Grande reaches - Agriculture")+
-  ylab("Depletion (cfs)")

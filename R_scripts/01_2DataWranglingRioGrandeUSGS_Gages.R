@@ -65,16 +65,3 @@ join_data <- dat2 %>%
 
 #write to file
 write.csv(join_data,"Data/Processed/RioGrandeGages2003_2018.csv",row.names = FALSE)
-
-
-test <- read_csv("Data/Processed/RioGrandeGages2003_2018.csv", 
-                 col_types = cols(Mean_cfs = col_double()))
-
-
-
-
-
-
-
-
-

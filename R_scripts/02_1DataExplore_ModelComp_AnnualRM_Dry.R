@@ -15,7 +15,7 @@ library(janitor)
 #format dataframe testing for RM 74 #####
 
 #get RM 74: this RM is in Reach 7
-datResp <- read_csv("Data/Processed/AnnualDryRM.csv")
+datResp <- read_csv("Data/Processed/PersistenceDryRM.csv")
 datRM_74 <- datResp %>% 
   filter(RM==74) %>% 
   rename(YearRM = Year)
@@ -74,6 +74,7 @@ plot(dat$OtowiIndex_kaf~dat$Sum_days_rm_dry, ylab="cfs", main="Otowi Index",
      xlab="Sum days dry rm 74",pch=16, cex=1.5)
 
 #linear models with means####
+par(mfrow=c(1,1))
 mod <- lm(Sum_days_rm_dry ~ SanAcacia_mean_daily_div_cfs + Isleta_mean_daily_div_cfs +
             Mean_cfs_SanAcacia + Ag_DCU_cfs_7 + Riparian_DCU_cfs_7 + OpenWater_DCU_cfs_7 + 
             +Rain_cfs_7 + OtowiIndex_kaf, data=dat)
@@ -92,21 +93,21 @@ car::vif(mod2)
 #linear models with sums####
 mod3 <- lm(Sum_days_rm_dry ~ SanAcacia_mean_daily_div_cfs + Isleta_mean_daily_div_cfs +
             Mean_cfs_SanAcacia + Ag_DCU_cfs_7 + Riparian_DCU_cfs_7 + OpenWater_DCU_cfs_7 + 
-            Rain_cfs_7, data=dat2)
+            Rain_cfs_7, data=dat)
 plot(mod3)
 Anova(mod3, type=3)
 
 car::vif(mod3)
 
 mod4 <- lm(Sum_days_rm_dry ~ SanAcacia_mean_daily_div_cfs + Isleta_mean_daily_div_cfs +
-             Mean_cfs_SanAcacia + Rain_cfs_7, data=dat2)
+             Mean_cfs_SanAcacia + Rain_cfs_7, data=dat)
 plot(mod4)
 Anova(mod4, type=3)
 
 car::vif(mod4)
 
 #format dataframe for extent of dry river mile each day #####
-datExtDry <- read.csv("Data/Processed/DailyExtentDry.csv")
+datExtDry <- read.csv("Data/Processed/DailyExpansionDry.csv")
 datExtDryR7 <- datExtDry %>% 
   filter(Reach==7) %>% 
   group_by(Date) %>% 

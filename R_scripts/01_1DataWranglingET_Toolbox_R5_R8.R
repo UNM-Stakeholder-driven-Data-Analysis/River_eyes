@@ -1,8 +1,10 @@
 #Read me ####
 #The purpose of this scripts is to load the ET toolbox data from Reach 5
-#https://www.usbr.gov/uc/albuq/water/ETtoolbox/rg/newreaches/
-#had to do a select all and copy in to an excel
-#and then clean the data so it can be used
+#https://www.usbr.gov/uc/albuq/water/ETtoolbox/rg/newreaches/ from website 
+#had to do a select all and copy in to an excel and then clean the data so it can be used
+#this script could be cleaned up with a loop but there is a need to be careful because each
+#year of the ETtoolbox was not formatted the same so the columns or rows that need to be
+#deleted change
 
 #load libraries####
 library(tidyverse)
@@ -65,15 +67,19 @@ colnames(dat)[1] <- "X1"
 
 #text to columns 
 dat <- cSplit(dat, "X1", sep = " ", type.convert = F)
+
 #used to move some columns to the left that got split because of "text to columns"
 dat$X1_03 <- as.numeric(dat$X1_03)
+
 dat <- t(apply(dat,1,function(x){
   c(x[!is.na(x)],x[is.na(x)])
 }))
 dat <- as.data.frame(dat)
+
 #remove columns and rows that aren't needed
 dat <- dat[-c(13:20)] 
 dat <- dat[-(1:11),]
+
 #formatting for column names, dates, variable classes
 dat <- dat %>% 
   drop_na() %>% 
@@ -88,30 +94,38 @@ dat <- dat %>%
   mutate_at(c("Day","Tot_DCU_cfs", "Ag_DCU_cfs", "Riparian_DCU_cfs",
               "OpenWater_DCU_cfs", "Urban_DCU_cfs", "Rain_cfs", "Tot_URGWOM_cfs", 
               "five_day_avg_URGWOM_cfs", "ten_day_avg_URGWOM_cfs","Use_to_date_since_Jan1"), as.numeric)
+
 #to make month abbreviate to three letters
 dat$Month.n <- as.numeric(match(dat$Month,month.abb))
+
 #select needed columns
 dat <- dat %>% 
   select(Date:Month, Month.n, Day:Use_to_date_since_Jan1)
+
 #to combine and write files #
 dat2017 <- dat #345 obs
 
 
 ##### R5 2016 
 dat <- read_csv("Data/Raw/ET_toolbox/ET_toolbox_R5/ET_toolbox_R5_2016.csv")
+
 #rename column
 colnames(dat)[1] <- "X1"
+
 #text to columns 
 dat <- cSplit(dat, "X1", sep = " ", type.convert = F)
+
 #used to move some columns to the left that got split because of "text to columns"
 dat$X1_03 <- as.numeric(dat$X1_03)
 dat <- t(apply(dat,1,function(x){
   c(x[!is.na(x)],x[is.na(x)])
 }))
 dat <- as.data.frame(dat)
+
 #remove columns and rows that aren't needed
 dat <- dat[-c(13:20)] 
 dat <- dat[-(1:11),]
+
 #formatting for column names, dates, variable classes
 dat <- dat %>% 
   drop_na() %>% 
@@ -126,28 +140,38 @@ dat <- dat %>%
   mutate_at(c("Day","Tot_DCU_cfs", "Ag_DCU_cfs", "Riparian_DCU_cfs",
               "OpenWater_DCU_cfs", "Urban_DCU_cfs", "Rain_cfs", "Tot_URGWOM_cfs", 
               "five_day_avg_URGWOM_cfs", "ten_day_avg_URGWOM_cfs","Use_to_date_since_Jan1"), as.numeric)
+
 #to make month abbreviate to three letters
 dat$Month.n <- as.numeric(match(dat$Month,month.abb))
+
 #select needed columns
 dat <- dat %>% 
   select(Date:Month, Month.n, Day:Use_to_date_since_Jan1)
+
 #to combine and write files #
 dat2016 <- dat #345 obs
+
+
 ##### R5 2015 
 dat <- read_csv("Data/Raw/ET_toolbox/ET_toolbox_R5/ET_toolbox_R5_2015.csv")
+
 #rename column
 colnames(dat)[1] <- "X1"
+
 #text to columns 
 dat <- cSplit(dat, "X1", sep = " ", type.convert = F)
+
 #used to move some columns to the left that got split because of "text to columns"
 dat$X1_03 <- as.numeric(dat$X1_03)
 dat <- t(apply(dat,1,function(x){
   c(x[!is.na(x)],x[is.na(x)])
 }))
 dat <- as.data.frame(dat)
+
 #remove columns and rows that aren't needed
 dat <- dat[-c(13:20)]
 dat <- dat[-(1:11),]
+
 #formatting for column names, dates, variable classes
 dat <- dat %>% 
   drop_na() %>% 
@@ -162,28 +186,37 @@ dat <- dat %>%
   mutate_at(c("Day","Tot_DCU_cfs", "Ag_DCU_cfs", "Riparian_DCU_cfs",
               "OpenWater_DCU_cfs", "Urban_DCU_cfs", "Rain_cfs", "Tot_URGWOM_cfs", 
               "five_day_avg_URGWOM_cfs", "ten_day_avg_URGWOM_cfs","Use_to_date_since_Jan1"), as.numeric)
+
 #to make month abbreviate to three letters
 dat$Month.n <- as.numeric(match(dat$Month,month.abb))
+
 #select needed columns
 dat <- dat %>% 
   select(Date:Month, Month.n, Day:Use_to_date_since_Jan1)
+
 #to combine and write files #
 dat2015 <- dat #345 obs
+
 ##### R5 2014 
 dat <- read_csv("Data/Raw/ET_toolbox/ET_toolbox_R5/ET_toolbox_R5_2014.csv")
+
 #rename column
 colnames(dat)[1] <- "X1"
+
 #text to columns 
 dat <- cSplit(dat, "X1", sep = " ", type.convert = F)
+
 #used to move some columns to the left that got split because of "text to columns"
 dat$X1_03 <- as.numeric(dat$X1_03)
 dat <- t(apply(dat,1,function(x){
   c(x[!is.na(x)],x[is.na(x)])
 }))
 dat <- as.data.frame(dat)
+
 #remove columns and rows that aren't needed
 dat <- dat[-c(13:20)]
 dat <- dat[-(1:11),]
+
 #formatting for column names, dates, variable classes
 dat <- dat %>% 
   drop_na() %>% 
@@ -198,13 +231,17 @@ dat <- dat %>%
   mutate_at(c("Day","Tot_DCU_cfs", "Ag_DCU_cfs", "Riparian_DCU_cfs",
               "OpenWater_DCU_cfs", "Urban_DCU_cfs", "Rain_cfs", "Tot_URGWOM_cfs", 
               "five_day_avg_URGWOM_cfs", "ten_day_avg_URGWOM_cfs","Use_to_date_since_Jan1"), as.numeric)
+
 #to make month abbreviate to three letters
 dat$Month.n <- as.numeric(match(dat$Month,month.abb))
+
 #select needed columns
 dat <- dat %>% 
   select(Date:Month, Month.n, Day:Use_to_date_since_Jan1)
+
 #to combine and write files #
 dat2014 <- dat #345 obs
+
 ##### R5 2013 
 dat <- read_csv("Data/Raw/ET_toolbox/ET_toolbox_R5/ET_toolbox_R5_2013.csv")
 #rename column
@@ -2440,7 +2477,7 @@ R5_d2_correc <- R5_d2 %>%
   mutate(Op_5_cor = OpenWater_DCU_cfs + correc_R5$OpenWater_DCU_cfs) %>% 
   mutate(Rain_5_cor = Rain_cfs + correc_R5$Rain_cfs)
 
-ggplot(R5, aes(Date, Ag_DCU_cfs, col = "black")) + 
+ETCorrection_Plot <- ggplot(R5, aes(Date, Ag_DCU_cfs, col = "black")) + 
   geom_point(size = 1) +
   geom_point(data = R5_d2_correc, aes(Date, Ag_5_cor, col="grey"))+
   scale_color_manual(values=c("black", "grey"),
@@ -2452,6 +2489,9 @@ ggplot(R5, aes(Date, Ag_DCU_cfs, col = "black")) +
       text=element_text(family = "Times New Roman", size =12),
       legend.text = element_text(size=12),
       legend.position = c(1,1), legend.justification = c(1,1), axis.text.x=element_text(angle = 90))
+
+#save plot to file
+ggsave2("Figures/FigA2_ETCorrection.png", ETCorrection_Plot) #saving to pdf did not fully function as it removed legend
 
 R6 <- read_csv("Data/Processed/ET_data_R6.csv")
 R7 <- read_csv("Data/Processed/ET_data_R7.csv")

@@ -7,6 +7,10 @@
 #the data from the Isleta Diversion (used the largest canals BELCN + PERCN + CHICN)
 #https://www.usbr.gov/uc/albuq/water/ETtoolbox/rg/PROD/gage/archive/gage/
 
+#the script would benefit from a loop but you have to be careful because not all years 
+#need to have the same columns or rows removed and some of the column titles become
+#different upon importation
+
 #libraries####
 library(readxl)
 library(tidyverse)
