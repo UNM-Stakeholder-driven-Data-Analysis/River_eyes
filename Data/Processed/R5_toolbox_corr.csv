@@ -1,0 +1,8 @@
+"","Ag_DCU_cfs","Riparian_DCU_cfs","OpenWater_DCU_cfs","Urban_DCU_cfs","Rain_cfs","Tot_URGWOM_cfs","five_day_avg_URGWOM_cfs"
+"Ag_DCU_cfs",1,1,1,1,-0.56,0.91,0.99
+"Riparian_DCU_cfs",1,1,1,1,-0.57,0.91,0.99
+"OpenWater_DCU_cfs",1,1,1,1,-0.59,0.92,0.99
+"Urban_DCU_cfs",1,1,1,1,-0.59,0.92,0.99
+"Rain_cfs",-0.56,-0.57,-0.59,-0.59,1,-0.86,-0.64
+"Tot_URGWOM_cfs",0.91,0.91,0.92,0.92,-0.86,1,0.94
+"five_day_avg_URGWOM_cfs",0.99,0.99,0.99,0.99,-0.64,0.94,1
