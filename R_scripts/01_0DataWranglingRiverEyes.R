@@ -2,7 +2,7 @@
 #The purpose of this script is to format the raw data into response variables
 ##Only included 2003-2018 as these were the common years among raw datasets
 #Saved processed data folder
-#1) data to assess expansion or extent of river drying each day
+#1) data to assess extent of river drying each day
 #2) data to assess occurrence of river drying each mile each day
 #3) format data for annual persistence of drying
 
@@ -13,8 +13,8 @@ library(tidyverse)
 library(lubridate)
 library(janitor)
 
-#1) data to assess expansion or extent of river drying ####
-  #load data for expansion or daily extent of river drying 
+#1) data to assess extent of river drying ####
+  #load data for daily extent of river drying 
 dat <- read.csv("Data/Raw/River_Eyes/RiverEyes_compilation_2002_2018.csv", header = TRUE)
 
    #format date
@@ -52,7 +52,7 @@ dat2013 <- join_dat1 %>%
   get_dupes(Date, Reach)
 
  #write csv processed compilation data set
-write.csv(join_dat1,"Data/Processed/DailyExpansionDry.csv", row.names = FALSE)
+write.csv(join_dat1,"Data/Processed/DailyExtentDry.csv", row.names = FALSE)
 
 
 #2) data to assess occurrence of river drying each mile each day #####

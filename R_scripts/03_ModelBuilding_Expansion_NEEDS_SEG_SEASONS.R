@@ -18,7 +18,7 @@ library(visreg)
 
 #Load data and combine response and predictors ####
     #summed the extent dry by reach for each day
-resp_contemp <- read.csv("Data/Processed/DailyExpansionDry.csv") %>% 
+resp_contemp <- read.csv("Data/Processed/DailyExtentDry.csv") %>% 
   group_by(Date) %>% 
   summarise(across(DistanceDry, sum)) %>% 
   mutate(Date = as.Date(Date)) %>% 

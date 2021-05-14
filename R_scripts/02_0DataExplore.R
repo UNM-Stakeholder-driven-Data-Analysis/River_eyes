@@ -12,9 +12,9 @@ library(janitor) #duplication
 library(forecast) # for autotemporal Acf fxn
 library(tsibble)
 
-#Response Var - Daily Expansion of Dry river miles ####
+#Response Var - Daily Extent of Dry river miles ####
 #use read_csv for date format to be automatic but this makes it a tibble
-dat <- read_csv("Data/Processed/DailyExpansionDry.csv")
+dat <- read_csv("Data/Processed/DailyExtentDry.csv")
 
 # add day of year for plotting
 dat$Day <-  lubridate::yday(dat$Date)
@@ -22,7 +22,7 @@ dat <- dat %>%
   select(Date, DistanceDry,Year, Reach, Day) %>% 
   mutate(Reach = as.factor(as.character(Reach)))
 
-#Plot data Daily Expansion of Dry river miles
+#Plot data Daily Extent of Dry river miles
 pl1 <- ggplot(data=dat, aes(x=Day, y=DistanceDry))+
   geom_point()+
   facet_wrap(~Reach, scales="free_y")+
@@ -46,9 +46,9 @@ pl2 <- ggplot(data=dat, aes(x=Date, y=DistanceDry))+
 ExtentDryPlots <- plot_grid(pl1, pl2)
 ggsave2("Figures/Fig3_ExtentOfDrying.png", ExtentDryPlots) #saving to pdf did not fully work
 
-#Response Var - Daily Expansion of Dry River miles Temporal Auotcorrelation Reaches 5 & 7 ####
+#Response Var - Daily Extent of Dry River miles Temporal Auotcorrelation Reaches 5 & 7 ####
 #Reach 5 
-dat10 <- read_csv("Data/Processed/DailyExpansionDry.csv")
+dat10 <- read_csv("Data/Processed/DailyExtentDry.csv")
 
 #organizing data to get a single date and distance dry
 #date duplication even when by reach
@@ -104,7 +104,7 @@ forecast::Acf(dat12_ts, lag.max = 12, na.action = na.contiguous)
 forecast::Pacf(dat12_ts, lag.max = 12, na.action = na.contiguous)
 
 #Reach 7 
-dat10 <- read_csv("Data/Processed/DailyExpansionDry.csv")
+dat10 <- read_csv("Data/Processed/DailyExtentDry.csv")
 
 #organizing data to get a single date and distance dry
 #date duplication even when by reach

@@ -107,7 +107,7 @@ Anova(mod4, type=3)
 car::vif(mod4)
 
 #format dataframe for extent of dry river mile each day #####
-datExtDry <- read.csv("Data/Processed/DailyExpansionDry.csv")
+datExtDry <- read.csv("Data/Processed/DailyExtentDry.csv")
 datExtDryR7 <- datExtDry %>% 
   filter(Reach==7) %>% 
   group_by(Date) %>% 
